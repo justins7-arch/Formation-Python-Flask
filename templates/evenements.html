@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Événements{% endblock %}
+
+{% block contenu %}
+<h2>Liste des événements</h2>
+<a href="{{ url_for('ajouter_evenement') }}">Ajouter un événement</a>
+
+{% for evenement in evenements %}
+<article>
+    <h3>{{ evenement.nom }}</h3>
+    <p>Date : {{ evenement.date }}</p>
+    <p>Lieu : {{ evenement.lieu }}</p>
+    <p>Capacité : {{ evenement.capacite }} places</p>
+</article>
+{% else %}
+<p>Aucun événement enregistré.</p>
+{% endfor %}
+{% endblock %}

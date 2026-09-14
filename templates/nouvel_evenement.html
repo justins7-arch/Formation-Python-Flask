@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Nouvel événement{% endblock %}
+
+{% block contenu %}
+<h2>Créer un événement</h2>
+<form method="POST">
+    <label for="nom">Nom de l'événement</label>
+    <input id="nom" type="text" name="nom" required>
+
+    <label for="date">Date</label>
+    <input id="date" type="date" name="date" required>
+
+    <label for="lieu">Lieu</label>
+    <input id="lieu" type="text" name="lieu" required>
+
+    <label for="capacite">Capacité</label>
+    <input id="capacite" type="number" name="capacite" min="1" required>
+
+    <button type="submit">Enregistrer</button>
+</form>
+{% endblock %}
