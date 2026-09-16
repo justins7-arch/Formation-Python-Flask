@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Billets{% endblock %}
+
+{% block contenu %}
+<section class="content-header">
+    <h2>Billets vendus</h2>
+</section>
+
+<div class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Référence</th>
+                <th>Client</th>
+                <th>Catégorie</th>
+                <th>Prix</th>
+                <th>Statut</th>
+                <th>QR</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ticket in tickets %}
+            <tr>
+                <td>{{ ticket.reference }}</td>
+                <td>{{ ticket.acheteur }}</td>
+                <td>{{ ticket.categorie.nom }}</td>
+                <td>{{ ticket.prix }} €</td>
+                <td>
+                    {% if ticket.checked_in %}
+                        <span class="status success">Validé</span>
+                    {% else %}
+                        <span class="status neutral">En attente</span>
+                    {% endif %}
+                </td>
+                <td><a href="{{ url_for('qr_code', ticket_id=ticket.id) }}" class="link-btn">Voir QR</a></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6">Aucun billet vendu.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

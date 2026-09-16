@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Catégories & Prix{% endblock %}
+
+{% block contenu %}
+<section class="content-header">
+    <h2>Catégories et prix</h2>
+    <a href="{{ url_for('ajouter_categorie') }}" class="primary-btn">Ajouter une catégorie</a>
+</section>
+
+<form class="filter-form" method="GET">
+    <label for="evenement_id">Événement</label>
+    <select id="evenement_id" name="evenement_id" onchange="this.form.submit()">
+        <option value="">Tous les événements</option>
+        {% for event in evenements %}
+        <option value="{{ event.id }}" {% if selected_event_id == event.id %}selected{% endif %}>{{ event.nom }}</option>
+        {% endfor %}
+    </select>
+</form>
+
+<div class="card-list">
+    {% for categorie in categories %}
+    <article class="card">
+        <h3>{{ categorie.nom }}</h3>
+        <p><strong>Événement :</strong> {{ categorie.evenement.nom }}</p>
+        <p><strong>Prix :</strong> {{ categorie.prix }} €</p>
+        <p><strong>Quantité :</strong> {{ categorie.quantite }}</p>
+    </article>
+    {% else %}
+    <p>Aucune catégorie enregistrée.</p>
+    {% endfor %}
+</div>
+{% endblock %}

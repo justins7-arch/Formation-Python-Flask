@@ -7,15 +7,34 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <header>
-        <h1>Billetterie du Stade Communal</h1>
-        <nav>
-            <a href="{{ url_for('accueil') }}">Accueil</a>
-            <a href="{{ url_for('evenements') }}">Événements</a>
-            <a href="{{ url_for('ajouter_evenement') }}">Nouvel événement</a>
-        </nav>
+    <header class="site-header">
+        <div class="container nav-wrap">
+            <div class="brand">TicketFlow</div>
+            {% if session.get('user_id') %}
+            <nav class="main-nav">
+                <a href="{{ url_for('dashboard') }}">Tableau de bord</a>
+                <a href="{{ url_for('evenements') }}">Événements</a>
+                <a href="{{ url_for('categories') }}">Catégories</a>
+                <a href="{{ url_for('ventes') }}">Ventes</a>
+                <a href="{{ url_for('billets') }}">Billets</a>
+                <a href="{{ url_for('controle_entree') }}">Contrôle</a>
+                <a href="{{ url_for('logout') }}">Déconnexion</a>
+            </nav>
+            {% endif %}
+        </div>
     </header>
-    <main>
+
+    <main class="container main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-list">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
         {% block contenu %}{% endblock %}
     </main>
 </body>

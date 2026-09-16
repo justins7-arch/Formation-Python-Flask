@@ -3,7 +3,10 @@
 {% block title %}Accueil - Billetterie{% endblock %}
 
 {% block contenu %}
-<h2>Bienvenue</h2>
-<p>Bienvenue dans l'application de billetterie du Stade Communal.</p>
-<a href="{{ url_for('evenements') }}">Voir les événements</a>
+<section class="card" style="padding: 24px;">
+    <h2>Bienvenue</h2>
+    <p>Bienvenue dans l’application de gestion de billetterie du Stade Communal.</p>
+    <p>Connectez-vous pour gérer les événements, les catégories, les ventes, les billets et le contrôle d’entrée.</p>
+    <a href="{{ url_for('login') }}" class="primary-btn">Se connecter</a>
+</section>
 {% endblock %}

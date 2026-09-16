@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Ventes{% endblock %}
+
+{% block contenu %}
+<section class="content-header">
+    <h2>Vente de billets</h2>
+</section>
+
+<form method="GET" class="filter-form">
+    <label for="evenement_id">Événement</label>
+    <select id="evenement_id" name="evenement_id" onchange="this.form.submit()">
+        <option value="">Sélectionner</option>
+        {% for event in evenements %}
+        <option value="{{ event.id }}" {% if selected_event_id == event.id %}selected{% endif %}>{{ event.nom }}</option>
+        {% endfor %}
+    </select>
+</form>
+
+<div class="card form-card">
+    <form method="POST">
+        <label for="evenement_id_form">Événement</label>
+        <select id="evenement_id_form" name="evenement_id" required>
+            {% for event in evenements %}
+            <option value="{{ event.id }}" {% if selected_event_id == event.id %}selected{% endif %}>{{ event.nom }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="categorie_id">Catégorie</label>
+        <select id="categorie_id" name="categorie_id" required>
+            {% for categorie in categories %}
+            <option value="{{ categorie.id }}">{{ categorie.nom }} - {{ categorie.prix }} €</option>
+            {% endfor %}
+        </select>
+
+        <label for="acheteur">Nom du client</label>
+        <input id="acheteur" name="acheteur" type="text" required>
+
+        <label for="email">Email du client</label>
+        <input id="email" name="email" type="email" required>
+
+        <label for="quantite">Quantité</label>
+        <input id="quantite" name="quantite" type="number" min="1" required>
+
+        <button type="submit" class="primary-btn">Valider la vente</button>
+    </form>
+</div>
+{% endblock %}

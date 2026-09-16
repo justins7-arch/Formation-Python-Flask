@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block contenu %}
+<section class="auth-box">
+    <div class="card auth-card">
+        <h2>Connexion</h2>
+        <form method="POST">
+            <label for="username">Nom d'utilisateur</label>
+            <input id="username" name="username" type="text" required>
+
+            <label for="password">Mot de passe</label>
+            <input id="password" name="password" type="password" required>
+
+            <button type="submit" class="primary-btn">Se connecter</button>
+        </form>
+        <div class="auth-info">
+            <strong>Compte de démonstration :</strong>
+            <p>Utilisateur : admin</p>
+            <p>Mot de passe : admin123</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

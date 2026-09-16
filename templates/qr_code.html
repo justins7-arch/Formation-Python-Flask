@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}QR Code{% endblock %}
+
+{% block contenu %}
+<section class="qr-section">
+    <div class="card qr-card">
+        <h2>Billet : {{ ticket.reference }}</h2>
+        <img src="{{ qr_url }}" alt="QR code du billet">
+        <p><strong>Client :</strong> {{ ticket.acheteur }}</p>
+        <p><strong>Email :</strong> {{ ticket.email }}</p>
+        <p><strong>Catégorie :</strong> {{ ticket.categorie.nom }}</p>
+        <p><strong>Prix :</strong> {{ ticket.prix }} €</p>
+        <a href="{{ url_for('billets') }}" class="primary-btn">Retour aux billets</a>
+    </div>
+</section>
+{% endblock %}

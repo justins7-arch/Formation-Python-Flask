@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord{% endblock %}
+
+{% block contenu %}
+<section class="dashboard">
+    <div class="stats-grid">
+        <div class="stat-card accent-blue">
+            <span>Événements</span>
+            <strong>{{ total_evenements }}</strong>
+        </div>
+        <div class="stat-card accent-green">
+            <span>Ventes</span>
+            <strong>{{ total_ventes }}</strong>
+        </div>
+        <div class="stat-card accent-purple">
+            <span>Billets</span>
+            <strong>{{ total_billets }}</strong>
+        </div>
+        <div class="stat-card accent-orange">
+            <span>Entrées validées</span>
+            <strong>{{ billets_valides }}</strong>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h3>Ventes récentes</h3>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Email</th>
+                    <th>Total</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vente in ventes_recents %}
+                <tr>
+                    <td>{{ vente.acheteur }}</td>
+                    <td>{{ vente.email }}</td>
+                    <td>{{ vente.total }} €</td>
+                    <td>{{ vente.created_at.strftime('%d/%m/%Y') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4">Aucune vente récente.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
