@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Configuration - StadeControl') }}{% endblock %}
+
+{% block contenu %}
+<section class="management-page">
+    <div class="content-header page-heading">
+        <div>
+            <p class="eyebrow">StadeControl · Système</p>
+            <h2>Configuration</h2>
+            <p class="page-subtitle">Préparez les paramètres opérationnels du Stade Communal depuis un seul espace.</p>
+        </div>
+    </div>
+
+    <div class="configuration-grid">
+        <article class="management-card configuration-card">
+            <div class="configuration-icon">⌂</div>
+            <h3>Ajouter un stade</h3>
+            <p>Créez un événement avec son lieu, sa capacité et sa localisation administrative.</p>
+            <a href="{{ url_for('ajouter_evenement') }}" class="primary-btn">Configurer un stade</a>
+        </article>
+        <article class="management-card configuration-card">
+            <div class="configuration-icon">▦</div>
+            <h3>Ajouter une activité et un type</h3>
+            <p>Ajoutez une catégorie de billets, son type, son prix et sa quantité disponible.</p>
+            <a href="{{ url_for('ajouter_categorie') }}" class="primary-btn">Ajouter une activité</a>
+        </article>
+    </div>
+</section>
+{% endblock %}

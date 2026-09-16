@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Billets{% endblock %}
+{% block title %}{{ _('Billets') }}{% endblock %}
 
 {% block contenu %}
 <section class="content-header">
@@ -11,12 +11,12 @@
     <table>
         <thead>
             <tr>
-                <th>Référence</th>
-                <th>Client</th>
-                <th>Catégorie</th>
-                <th>Prix</th>
-                <th>Statut</th>
-                <th>QR</th>
+                <th>{{ _('Référence') }}</th>
+                <th>{{ _('Client') }}</th>
+                <th>{{ _('Catégorie') }}</th>
+                <th>{{ _('Prix') }}</th>
+                <th>{{ _('Statut') }}</th>
+                <th>{{ _('QR') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -28,16 +28,16 @@
                 <td>{{ money(ticket.prix, ticket.evenement) }}</td>
                 <td>
                     {% if ticket.checked_in %}
-                        <span class="status success">Validé</span>
+                        <span class="status success">{{ _('Validé') }}</span>
                     {% else %}
-                        <span class="status neutral">En attente</span>
+                        <span class="status neutral">{{ _('En attente') }}</span>
                     {% endif %}
                 </td>
-                <td><a href="{{ url_for('qr_code', ticket_id=ticket.id) }}" class="link-btn">Voir QR</a></td>
+                <td><a href="{{ url_for('qr_code', ticket_id=ticket.id) }}" class="link-btn">{{ _('Voir QR') }}</a></td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="6">Aucun billet vendu.</td>
+                <td colspan="6">{{ _('Aucun billet vendu.') }}</td>
             </tr>
             {% endfor %}
         </tbody>

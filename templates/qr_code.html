@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}QR Code{% endblock %}
+{% block title %}{{ _('QR Code') }}{% endblock %}
 
 {% block contenu %}
 <section class="qr-section">
     <div class="card qr-card">
-        <h2>Billet : {{ ticket.reference }}</h2>
+        <h2>{{ _('Billet') }} : {{ ticket.reference }}</h2>
         <img src="{{ qr_url }}" alt="QR code du billet">
         <p><strong>Client :</strong> {{ ticket.acheteur }}</p>
         <p><strong>Email :</strong> {{ ticket.email }}</p>

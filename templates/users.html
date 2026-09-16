@@ -1,54 +1,64 @@
 {% extends "base.html" %}
 
-{% block title %}Utilisateurs{% endblock %}
+{% block title %}{{ _('Utilisateurs') }}{% endblock %}
 
 {% block contenu %}
 <section class="content-header">
-    <h2>Gestion des utilisateurs</h2>
+    <h2>{{ _('Gestion des utilisateurs') }}</h2>
 </section>
 
 <div class="two-column-layout">
     <div class="card form-card">
-        <h3>Créer un utilisateur</h3>
+        <h3>{{ _('Créer un utilisateur') }}</h3>
         <form method="POST">
-            <label for="username">Nom d'utilisateur</label>
+            <label for="username">{{ _('Nom d\'utilisateur') }}</label>
             <input id="username" name="username" type="text" required>
 
-            <label for="password">Mot de passe</label>
-            <input id="password" name="password" type="password" required>
+            <label for="password">{{ _('Mot de passe') }}</label>
+            <input id="password" name="password" type="password" placeholder="Laisser vide pour générer un mot de passe">
 
-            <label for="role">Rôle</label>
+            <label for="email">{{ _('Email') }}</label>
+            <input id="email" name="email" type="email" required>
+
+            <label for="telephone">{{ _('phone') }}</label>
+            <input id="telephone" name="telephone" type="tel" required>
+
+            <label for="role">{{ _('role') }}</label>
             <select id="role" name="role">
-                <option value="administrateur">Administrateur</option>
-                <option value="auditeur">Auditeur</option>
-                <option value="vendeur">Vendeur</option>
+                <option value="administrateur">{{ _('Administrateur') }}</option>
+                <option value="auditeur">{{ _('Auditeur') }}</option>
+                <option value="vendeur">{{ _('Vendeur') }}</option>
             </select>
 
-            <label>Photo de l'utilisateur</label>
+            <label>{{ _('Photo de l\'utilisateur') }}</label>
             <div class="camera-box">
                 <video id="camera-preview" autoplay playsinline></video>
                 <canvas id="camera-canvas" hidden></canvas>
                 <img id="photo-preview" class="photo-preview" alt="Aperçu de la photo" hidden>
                 <input id="photo" name="photo" type="hidden">
                 <div class="camera-actions">
-                    <button type="button" class="secondary-btn" id="start-camera">Activer la caméra</button>
-                    <button type="button" class="primary-btn" id="capture-photo">Capturer la photo</button>
+                    <button type="button" class="secondary-btn" id="start-camera">{{ _('Activer la caméra') }}</button>
+                    <button type="button" class="primary-btn" id="capture-photo">{{ _('Capturer la photo') }}</button>
                 </div>
                 <small id="camera-message">Autorisez l'accès à la caméra pour prendre une photo.</small>
             </div>
 
-            <button type="submit" class="primary-btn">Créer</button>
+            <button type="submit" class="primary-btn">{{ _('Créer') }}</button>
         </form>
     </div>
 
     <div class="card panel">
-        <h3>Liste des utilisateurs</h3>
+        <h3>{{ _('Liste des utilisateurs') }}</h3>
         <table>
             <thead>
                 <tr>
-                    <th>Utilisateur</th>
-                    <th>Rôle</th>
-                    <th>Photo</th>
+                    <th>{{ _('Nom d\'utilisateur') }}</th>
+                    <th>{{ _('role') }}</th>
+                    <th>{{ _('Photo de l\'utilisateur') }}</th>
+                    <th>{{ _('Email') }}</th>
+                    <th>{{ _('phone') }}</th>
+                    <th>{{ _('Statut') }}</th>
+                    <th>{{ _('Action') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -57,10 +67,28 @@
                     <td>{{ user.username }}</td>
                     <td>{{ user.role }}</td>
                     <td>{% if user.photo %}<img src="{{ user.photo }}" class="user-photo" alt="Photo de {{ user.username }}">{% else %}Avatar{% endif %}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.telephone }}</td>
+                    <td>
+                        {% if user.active %}<span class="status success">{{ _('active') }}</span>{% else %}<span class="status neutral">{{ _('inactive') }}</span>{% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('edit_user', user_id=user.id) }}" class="table-action-btn">Modifier</a>
+                        {% if user.id != session.get('user_id') %}
+                        <form method="POST" action="{{ url_for('toggle_user_active', user_id=user.id) }}" class="inline-form">
+                            <button type="submit" class="table-action-btn">{{ _('deactivate') if user.active else _('activate') }}</button>
+                        </form>
+                        {% else %}<span class="muted-label">Compte actuel</span>{% endif %}
+                        {% if user.role in ['auditeur', 'vendeur'] %}
+                        <form method="POST" action="{{ url_for('reset_user_password', user_id=user.id) }}" class="inline-form" onsubmit="return confirm('Réinitialiser le mot de passe de cet utilisateur ?');">
+                            <button type="submit" class="table-action-btn">{{ _('reset_password') }}</button>
+                        </form>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="3">Aucun utilisateur.</td>
+                    <td colspan="7">Aucun utilisateur.</td>
                 </tr>
                 {% endfor %}
             </tbody>

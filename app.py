@@ -2,8 +2,15 @@ from datetime import datetime
 from functools import wraps
 from io import BytesIO
 import base64
+import os
 import random
+import secrets
+import smtplib
+import sqlite3
 import string
+import tempfile
+import time
+from email.message import EmailMessage
 
 from flask import Flask, flash, redirect, render_template, request, send_file, session, url_for
 from flask_sqlalchemy import SQLAlchemy
@@ -20,6 +27,8 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = "ticket-secret-key"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
+app.config["SESSION_TIMEOUT_SECONDS"] = 120
 db = SQLAlchemy(app)
 
 TRANSLATIONS = {
@@ -47,6 +56,55 @@ TRANSLATIONS = {
         "Rapports de ventes": "Rapports de ventes", "Rapport journalier": "Rapport journalier", "Rapport mensuel": "Rapport mensuel",
         "Filtrer": "Filtrer", "Télécharger PDF": "Télécharger PDF", "Télécharger Excel": "Télécharger Excel",
         "Chiffre d’affaires": "Chiffre d’affaires", "Nombre de ventes": "Nombre de ventes", "Billets vendus": "Billets vendus",
+        "Accueil - Billetterie": "Accueil - Billetterie", "Connexion": "Connexion", "Événements": "Événements",
+        "Catégories & Prix": "Catégories & Prix", "Configuration - StadeControl": "Configuration - StadeControl",
+        "Contrôle d'entrée": "Contrôle d'entrée", "Nouvelle catégorie": "Nouvelle catégorie",
+        "Nouvel événement": "Nouvel événement", "QR Code": "QR Code", "Utilisateurs": "Utilisateurs",
+        "Gestion des utilisateurs": "Gestion des utilisateurs", "Créer un utilisateur": "Créer un utilisateur",
+        "Liste des utilisateurs": "Liste des utilisateurs", "Tableau de bord": "Tableau de bord",
+        "Ventes": "Ventes", "Billets": "Billets", "StadeControl · Planning": "StadeControl · Planning",
+        "StadeControl · Tarification": "StadeControl · Tarification", "Ventes par événement": "Ventes par événement",
+        "Billets vendus par événement": "Billets vendus par événement", "Statut des billets": "Statut des billets",
+        "Revenus par catégorie": "Revenus par catégorie", "Utilisation des capacités": "Utilisation des capacités",
+        "Créer un événement": "Créer un événement", "Ajouter une catégorie": "Ajouter une catégorie",
+        "Vente de billets": "Vente de billets", "Billet": "Billet",
+        "about": "À propos", "configuration": "Configuration", "À propos - StadeControl": "À propos - StadeControl", "SYSTÈME": "SYSTÈME", "OPÉRATIONS": "OPÉRATIONS",
+        "DÉCONNEXION": "DÉCONNEXION", "Contrôle": "Contrôle", "Accueil": "Accueil",
+        "Référence": "Référence", "Client": "Client", "Email": "Email", "Catégorie": "Catégorie", "Prix": "Prix",
+        "Statut": "Statut", "QR": "QR", "Voir QR": "Voir QR", "Validé": "Validé", "En attente": "En attente",
+        "Aucun billet vendu.": "Aucun billet vendu.", "Événement": "Événement", "Date": "Date", "Lieu": "Lieu",
+        "Capacité": "Capacité", "Nom de l'événement": "Nom de l'événement", "Nom de la catégorie": "Nom de la catégorie",
+        "Quantité": "Quantité", "Quantité disponible": "Quantité disponible", "Nom d'utilisateur": "Nom d'utilisateur",
+        "Mot de passe": "Mot de passe", "Administrateur": "Administrateur", "Auditeur": "Auditeur", "Vendeur": "Vendeur",
+        "Photo de l'utilisateur": "Photo de l'utilisateur", "Activer la caméra": "Activer la caméra", "Capturer la photo": "Capturer la photo",
+        "Créer": "Créer", "Enregistrer": "Enregistrer", "Type de rapport": "Type de rapport", "Mois": "Mois",
+        "Organisez vos offres, vos tarifs et vos stocks par événement.": "Organisez vos offres, vos tarifs et vos stocks par événement.",
+        "Accès refusé pour votre rôle.": "Accès refusé pour votre rôle.", "Identifiants incorrects.": "Identifiants incorrects.",
+        "Événement ajouté avec succès.": "Événement ajouté avec succès.", "Catégorie ajoutée.": "Catégorie ajoutée.",
+        "Billet introuvable. Vérifiez la référence.": "Billet introuvable. Vérifiez la référence.",
+        "Ce billet a déjà été validé à l’entrée.": "Ce billet a déjà été validé à l’entrée.",
+        "Total": "Total", "Aucune vente récente.": "Aucune vente récente.", "Aucun billet pour le moment.": "Aucun billet pour le moment.",
+        "Validés": "Validés", "Revenu (€)": "Revenu (€)",
+        "Stade Communal · Version 3.0.2": "Stade Communal · Version 3.0.2",
+        "StadeControl est une application professionnelle de gestion de billetterie du Stade Communal.": "StadeControl est une application professionnelle de gestion de billetterie du Stade Communal.",
+        "StadeControl centralise l'ensemble du cycle de gestion : création des événements, vente des billets, contrôle des entrées, gestion des utilisateurs et rapports d'activité.": "StadeControl centralise l'ensemble du cycle de gestion : création des événements, vente des billets, contrôle des entrées, gestion des utilisateurs et rapports d'activité.",
+        "La plateforme a été pensée pour offrir aux équipes du Stade Communal une expérience fiable, claire et efficace, depuis la préparation d'un événement jusqu'au suivi de ses performances.": "La plateforme a été pensée pour offrir aux équipes du Stade Communal une expérience fiable, claire et efficace, depuis la préparation d'un événement jusqu'au suivi de ses performances.",
+        "Développé par": "Développé par", "Version": "Version", "Édition": "Édition",
+        "welcome_user": "Bienvenue, {username} !", "sale_registered": "Vente enregistrée : {quantity} billet(s) créés.",
+        "entry_validated": "Entrée validée pour {buyer}.", "duplicate_user": "Ce nom d’utilisateur existe déjà.",
+        "user_created": "Utilisateur {username} créé avec le rôle {role}.", "required_user_fields": "Merci de remplir le nom et le mot de passe.",
+        "backup_title": "Sauvegarde et restauration", "download_backup": "Télécharger une sauvegarde",
+        "restore_backup": "Restaurer une sauvegarde", "choose_backup": "Choisir un fichier .db",
+        "restore_action": "Restaurer les données", "backup_warning": "La restauration remplacera les données actuelles.",
+        "backup_missing": "Sélectionnez un fichier de sauvegarde.", "backup_type": "Le fichier doit être une base SQLite (.db, .sqlite ou .sqlite3).",
+        "backup_success": "Sauvegarde restaurée avec succès.", "backup_invalid": "La sauvegarde est invalide ou n’a pas pu être restaurée.",
+        "user_created_sent": "Utilisateur {username} créé. Le mot de passe a été envoyé à son adresse email.",
+        "user_created_local": "Utilisateur {username} créé. Mot de passe temporaire : {password}",
+        "password_reset_sent": "Le mot de passe de {username} a été réinitialisé et envoyé par email.",
+        "password_reset_local": "Mot de passe réinitialisé pour {username}. Mot de passe temporaire : {password}",
+        "active": "Actif", "inactive": "Inactif", "deactivate": "Désactiver", "activate": "Activer",
+        "cancel_sale": "Annuler la vente", "cancelled": "Annulée", "confirm_cancel": "Confirmer l’annulation de cette vente ?",
+        "phone": "Téléphone", "reset_password": "Réinitialiser", "reset_confirm": "Réinitialiser le mot de passe de cet utilisateur ?", "Action": "Action",
     },
     "en": {
         "dashboard": "Dashboard", "events": "Events", "categories": "Categories", "users": "Users",
@@ -72,6 +130,54 @@ TRANSLATIONS = {
         "Rapports de ventes": "Sales reports", "Rapport journalier": "Daily report", "Rapport mensuel": "Monthly report",
         "Filtrer": "Filter", "Télécharger PDF": "Download PDF", "Télécharger Excel": "Download Excel",
         "Chiffre d’affaires": "Revenue", "Nombre de ventes": "Number of sales", "Billets vendus": "Tickets sold",
+        "Accueil - Billetterie": "Home - Ticketing", "Connexion": "Log in", "Événements": "Events",
+        "Catégories & Prix": "Categories & Prices", "Configuration - StadeControl": "Configuration - StadeControl",
+        "Contrôle d'entrée": "Entry control", "Nouvelle catégorie": "New category", "Nouvel événement": "New event",
+        "QR Code": "QR Code", "Utilisateurs": "Users", "Gestion des utilisateurs": "User management",
+        "Créer un utilisateur": "Create a user", "Liste des utilisateurs": "User list", "Tableau de bord": "Dashboard",
+        "Ventes": "Sales", "Billets": "Tickets", "StadeControl · Planning": "StadeControl · Planning",
+        "StadeControl · Tarification": "StadeControl · Pricing", "Ventes par événement": "Sales by event",
+        "Billets vendus par événement": "Tickets sold by event", "Statut des billets": "Ticket status",
+        "Revenus par catégorie": "Revenue by category", "Utilisation des capacités": "Capacity usage",
+        "Créer un événement": "Create an event", "Ajouter une catégorie": "Add a category",
+        "Vente de billets": "Ticket sales", "Billet": "Ticket",
+        "about": "About", "configuration": "Configuration", "À propos - StadeControl": "About - StadeControl", "SYSTÈME": "SYSTEM", "OPÉRATIONS": "OPERATIONS",
+        "DÉCONNEXION": "LOG OUT", "Contrôle": "Check-in", "Accueil": "Home",
+        "Référence": "Reference", "Client": "Customer", "Email": "Email", "Catégorie": "Category", "Prix": "Price",
+        "Statut": "Status", "QR": "QR", "Voir QR": "View QR", "Validé": "Validated", "En attente": "Pending",
+        "Aucun billet vendu.": "No tickets sold.", "Événement": "Event", "Date": "Date", "Lieu": "Location",
+        "Capacité": "Capacity", "Nom de l'événement": "Event name", "Nom de la catégorie": "Category name",
+        "Quantité": "Quantity", "Quantité disponible": "Available quantity", "Nom d'utilisateur": "Username",
+        "Mot de passe": "Password", "Administrateur": "Administrator", "Auditeur": "Auditor", "Vendeur": "Seller",
+        "Photo de l'utilisateur": "User photo", "Activer la caméra": "Enable camera", "Capturer la photo": "Capture photo",
+        "Créer": "Create", "Enregistrer": "Save", "Type de rapport": "Report type", "Mois": "Month",
+        "Organisez vos offres, vos tarifs et vos stocks par événement.": "Organize offers, prices and stock by event.",
+        "Accès refusé pour votre rôle.": "Access denied for your role.", "Identifiants incorrects.": "Incorrect credentials.",
+        "Événement ajouté avec succès.": "Event added successfully.", "Catégorie ajoutée.": "Category added.",
+        "Billet introuvable. Vérifiez la référence.": "Ticket not found. Check the reference.",
+        "Ce billet a déjà été validé à l’entrée.": "This ticket has already been checked in.",
+        "Total": "Total", "Aucune vente récente.": "No recent sales.", "Aucun billet pour le moment.": "No tickets yet.",
+        "Validés": "Validated", "Revenu (€)": "Revenue ($)",
+        "Stade Communal · Version 3.0.2": "Stade Communal · Version 3.0.2",
+        "StadeControl est une application professionnelle de gestion de billetterie du Stade Communal.": "StadeControl is a professional ticketing management application for Stade Communal.",
+        "StadeControl centralise l'ensemble du cycle de gestion : création des événements, vente des billets, contrôle des entrées, gestion des utilisateurs et rapports d'activité.": "StadeControl centralizes the entire management cycle: event creation, ticket sales, entry control, user management and activity reports.",
+        "La plateforme a été pensée pour offrir aux équipes du Stade Communal une expérience fiable, claire et efficace, depuis la préparation d'un événement jusqu'au suivi de ses performances.": "The platform gives Stade Communal teams a reliable, clear and efficient experience, from event preparation to performance monitoring.",
+        "Développé par": "Developed by", "Version": "Version", "Édition": "Edition",
+        "welcome_user": "Welcome, {username}!", "sale_registered": "Sale recorded: {quantity} ticket(s) created.",
+        "entry_validated": "Entry validated for {buyer}.", "duplicate_user": "This username already exists.",
+        "user_created": "User {username} created with role {role}.", "required_user_fields": "Please fill in the username and password.",
+        "backup_title": "Backup and restore", "download_backup": "Download a backup",
+        "restore_backup": "Restore a backup", "choose_backup": "Choose a .db file",
+        "restore_action": "Restore data", "backup_warning": "Restoring will replace the current data.",
+        "backup_missing": "Select a backup file.", "backup_type": "The file must be a SQLite database (.db, .sqlite or .sqlite3).",
+        "backup_success": "Backup restored successfully.", "backup_invalid": "The backup is invalid or could not be restored.",
+        "user_created_sent": "User {username} created. The password was sent to their email address.",
+        "user_created_local": "User {username} created. Temporary password: {password}",
+        "password_reset_sent": "{username}'s password was reset and sent by email.",
+        "password_reset_local": "Password reset for {username}. Temporary password: {password}",
+        "active": "Active", "inactive": "Inactive", "deactivate": "Deactivate", "activate": "Activate",
+        "cancel_sale": "Cancel sale", "cancelled": "Cancelled", "confirm_cancel": "Confirm cancellation of this sale?",
+        "phone": "Phone", "reset_password": "Reset password", "reset_confirm": "Reset this user's password?", "Action": "Action",
     },
 }
 
@@ -111,6 +217,20 @@ def inject_preferences():
     }
 
 
+@app.before_request
+def enforce_session_timeout():
+    if "user_id" not in session or request.endpoint in {"login", "static"}:
+        return None
+    now = time.time()
+    last_activity = session.get("last_activity", now)
+    if now - last_activity >= app.config["SESSION_TIMEOUT_SECONDS"]:
+        session.clear()
+        flash("Votre session a expiré après 2 minutes d’inactivité.", "warning")
+        return redirect(url_for("login"))
+    session["last_activity"] = now
+    return None
+
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -119,6 +239,9 @@ class User(db.Model):
     language = db.Column(db.String(5), default="fr")
     currency = db.Column(db.String(5), default="FC")
     photo = db.Column(db.Text, nullable=True)
+    active = db.Column(db.Boolean, nullable=False, default=True)
+    email = db.Column(db.String(150), nullable=False, default="")
+    telephone = db.Column(db.String(30), nullable=False, default="")
 
 
 class Evenement(db.Model):
@@ -153,6 +276,7 @@ class Vente(db.Model):
     email = db.Column(db.String(150), nullable=False)
     total = db.Column(db.Float, nullable=False, default=0.0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    annulee = db.Column(db.Boolean, nullable=False, default=False)
     tickets = db.relationship("Ticket", backref="vente", cascade="all, delete-orphan")
 
 
@@ -172,6 +296,36 @@ class Ticket(db.Model):
 
 def generate_reference():
     return "TCK-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
+
+
+def generate_temporary_password():
+    return secrets.token_urlsafe(9)
+
+
+def send_user_password(user, temporary_password, reset=False):
+    smtp_host = os.getenv("STADECONTROL_SMTP_HOST")
+    smtp_port = int(os.getenv("STADECONTROL_SMTP_PORT", "587"))
+    smtp_user = os.getenv("STADECONTROL_SMTP_USER")
+    smtp_password = os.getenv("STADECONTROL_SMTP_PASSWORD")
+    sender = os.getenv("STADECONTROL_SMTP_FROM", smtp_user or "")
+    if not smtp_host or not smtp_user or not smtp_password or not sender or not user.email:
+        return False
+
+    message = EmailMessage()
+    message["Subject"] = "StadeControl - Réinitialisation de votre accès" if reset else "StadeControl - Votre accès"
+    message["From"] = sender
+    message["To"] = user.email
+    message.set_content(
+        f"Bonjour {user.username},\n\n"
+        f"Votre mot de passe temporaire StadeControl est : {temporary_password}\n\n"
+        "Connectez-vous puis demandez à un administrateur de le modifier.\n"
+        "StadeControl - Stade Communal"
+    )
+    with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as smtp:
+        smtp.starttls()
+        smtp.login(smtp_user, smtp_password)
+        smtp.send_message(message)
+    return True
 
 
 def login_required(f):
@@ -194,7 +348,7 @@ def role_required(*allowed_roles):
                 return redirect(url_for("login"))
 
             user = User.query.get(session["user_id"])
-            if user is None:
+            if user is None or not user.active:
                 session.clear()
                 return redirect(url_for("login"))
 
@@ -205,7 +359,7 @@ def role_required(*allowed_roles):
                 db.session.commit()
 
             if role not in allowed_roles:
-                flash("Accès refusé pour votre rôle.", "danger")
+                flash(translate("Accès refusé pour votre rôle."), "danger")
                 return redirect(url_for("dashboard"))
             session["user_role"] = role
             return f(*args, **kwargs)
@@ -235,7 +389,9 @@ def login():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
         user = User.query.filter_by(username=username, password=password).first()
-        if user:
+        if user and not user.active:
+            flash("Ce compte est désactivé. Contactez un administrateur.", "danger")
+        elif user:
             if (user.role or "").lower() == "admin":
                 user.role = "administrateur"
                 db.session.commit()
@@ -244,9 +400,10 @@ def login():
             session["user_role"] = (user.role or "administrateur").lower()
             session["language"] = user.language or "fr"
             session["currency"] = user.currency or "FC"
-            flash(f"Bienvenue, {user.username} !", "success")
+            session["last_activity"] = time.time()
+            flash(translate("welcome_user").format(username=user.username), "success")
             return redirect(url_for("dashboard"))
-        flash("Identifiants incorrects.", "danger")
+        flash(translate("Identifiants incorrects."), "danger")
     return render_template("login.html")
 
 
@@ -276,16 +433,85 @@ def a_propos():
     return render_template("a_propos.html")
 
 
+@app.route("/configuration")
+@login_required
+@role_required("administrateur")
+def configuration():
+    return render_template("configuration.html")
+
+
+def database_path():
+    database_name = db.engine.url.database
+    if os.path.isabs(database_name):
+        return database_name
+    return os.path.join(app.instance_path, database_name)
+
+
+@app.route("/backup", methods=["GET", "POST"])
+@login_required
+@role_required("administrateur")
+def backup():
+    if request.method == "POST":
+        uploaded_file = request.files.get("backup_file")
+        if not uploaded_file or not uploaded_file.filename:
+            flash(translate("backup_missing"), "danger")
+            return redirect(url_for("backup"))
+        if not uploaded_file.filename.lower().endswith((".db", ".sqlite", ".sqlite3")):
+            flash(translate("backup_type"), "danger")
+            return redirect(url_for("backup"))
+
+        temporary_path = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as temporary_file:
+                temporary_path = temporary_file.name
+                uploaded_file.save(temporary_path)
+
+            source = sqlite3.connect(temporary_path)
+            integrity = source.execute("PRAGMA integrity_check").fetchone()[0]
+            table_names = {
+                row[0] for row in source.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            }
+            required_tables = {"user", "evenement", "categorie", "vente", "ticket"}
+            if integrity != "ok" or not required_tables.issubset(table_names):
+                raise ValueError("invalid_backup")
+
+            target_path = database_path()
+            db.session.remove()
+            db.engine.dispose()
+            target = sqlite3.connect(target_path)
+            source.backup(target)
+            target.close()
+            source.close()
+            flash(translate("backup_success"), "success")
+        except (sqlite3.Error, ValueError, OSError):
+            flash(translate("backup_invalid"), "danger")
+        finally:
+            if temporary_path and os.path.exists(temporary_path):
+                os.remove(temporary_path)
+        return redirect(url_for("backup"))
+
+    return render_template("backup.html")
+
+
+@app.route("/backup/download")
+@login_required
+@role_required("administrateur")
+def download_backup():
+    path = database_path()
+    filename = f"stadecontrol-backup-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}.db"
+    return send_file(path, as_attachment=True, download_name=filename, mimetype="application/octet-stream")
+
+
 @app.route("/dashboard")
 @login_required
 @role_required("administrateur", "auditeur", "vendeur")
 def dashboard():
     total_evenements = Evenement.query.count()
-    total_ventes = Vente.query.count()
+    total_ventes = Vente.query.filter_by(annulee=False).count()
     total_billets = Ticket.query.count()
     billets_valides = Ticket.query.filter_by(checked_in=True).count()
-    total_revenu = db.session.query(func.coalesce(func.sum(Vente.total), 0)).scalar() or 0
-    ventes_recents = Vente.query.order_by(Vente.created_at.desc()).limit(5).all()
+    total_revenu = db.session.query(func.coalesce(func.sum(Vente.total), 0)).filter(Vente.annulee.is_(False)).scalar() or 0
+    ventes_recents = Vente.query.filter_by(annulee=False).order_by(Vente.created_at.desc()).limit(5).all()
     avg_ticket_price = db.session.query(func.avg(Ticket.prix)).scalar() or 0
     upcoming_events = 0
     today = datetime.utcnow().strftime("%Y-%m-%d")
@@ -310,8 +536,8 @@ def dashboard():
     event_values = [item[1] for item in event_sales]
 
     status_billets = {
-        "Validés": billets_valides,
-        "En attente": max(total_billets - billets_valides, 0),
+        translate("Validés"): billets_valides,
+        translate("En attente"): max(total_billets - billets_valides, 0),
     }
 
     category_revenue = (
@@ -386,7 +612,11 @@ def report_period():
 
 def report_data():
     period, selected, start, end, label = report_period()
-    sales = Vente.query.filter(Vente.created_at >= start, Vente.created_at < end).order_by(Vente.created_at.desc()).all()
+    sales = Vente.query.filter(
+        Vente.created_at >= start,
+        Vente.created_at < end,
+        Vente.annulee.is_(False),
+    ).order_by(Vente.created_at.desc()).all()
     total_revenue = sum(float(sale.total or 0) for sale in sales)
     total_tickets = sum(len(sale.tickets) for sale in sales)
     return {
@@ -476,7 +706,17 @@ def export_pdf():
 @role_required("administrateur", "auditeur")
 def evenements():
     liste_evenements = Evenement.query.order_by(Evenement.date).all()
-    return render_template("evenements.html", evenements=liste_evenements)
+    event_rows = []
+    for evenement in liste_evenements:
+        vendus = len(evenement.tickets)
+        capacite = evenement.capacite or 1
+        event_rows.append({
+            "evenement": evenement,
+            "vendus": vendus,
+            "taux": min(round((vendus / capacite) * 100), 100),
+            "categories": len(evenement.categories),
+        })
+    return render_template("evenements.html", evenements=event_rows)
 
 
 @app.route("/evenements/ajouter", methods=["GET", "POST"])
@@ -494,7 +734,7 @@ def ajouter_evenement():
         )
         db.session.add(nouveau_evenement)
         db.session.commit()
-        flash("Événement ajouté avec succès.", "success")
+        flash(translate("Événement ajouté avec succès."), "success")
         return redirect(url_for("evenements"))
     return render_template("nouvel_evenement.html")
 
@@ -509,10 +749,18 @@ def categories():
         categories = Categorie.query.filter_by(evenement_id=selected_event_id).order_by(Categorie.nom).all()
     else:
         categories = Categorie.query.order_by(Categorie.nom).all()
+    category_rows = [
+        {
+            "categorie": categorie,
+            "vendus": len(categorie.tickets),
+            "restants": max(categorie.quantite - len(categorie.tickets), 0),
+        }
+        for categorie in categories
+    ]
     return render_template(
         "categories.html",
         evenements=evenements,
-        categories=categories,
+        categories=category_rows,
         selected_event_id=selected_event_id,
     )
 
@@ -530,7 +778,7 @@ def ajouter_categorie():
         )
         db.session.add(categorie)
         db.session.commit()
-        flash("Catégorie ajoutée.", "success")
+        flash(translate("Catégorie ajoutée."), "success")
         return redirect(url_for("categories", evenement_id=categorie.evenement_id))
     evenements = Evenement.query.order_by(Evenement.date).all()
     return render_template("nouvel_categorie.html", evenements=evenements)
@@ -574,7 +822,7 @@ def ventes():
             db.session.add(ticket)
 
         db.session.commit()
-        flash(f"Vente enregistrée : {quantite} billet(s) créés.", "success")
+        flash(translate("sale_registered").format(quantity=quantite), "success")
         return redirect(url_for("billets"))
 
     if selected_event_id:
@@ -584,8 +832,25 @@ def ventes():
         "ventes.html",
         evenements=evenements,
         categories=categories,
+        ventes_liste=Vente.query.order_by(Vente.created_at.desc()).limit(30).all(),
         selected_event_id=selected_event_id,
     )
+
+
+@app.route("/ventes/<int:vente_id>/annuler", methods=["POST"])
+@login_required
+@role_required("administrateur")
+def annuler_vente(vente_id):
+    vente = Vente.query.get_or_404(vente_id)
+    if vente.annulee:
+        flash("Cette vente est déjà annulée.", "warning")
+        return redirect(url_for("ventes"))
+    for ticket in vente.tickets:
+        db.session.delete(ticket)
+    vente.annulee = True
+    db.session.commit()
+    flash(f"La vente #{vente.id} a été annulée.", "success")
+    return redirect(url_for("ventes"))
 
 
 @app.route("/billets")
@@ -618,15 +883,15 @@ def controle_entree():
         ticket = Ticket.query.filter_by(reference=reference).first()
 
         if ticket is None:
-            message = "Billet introuvable. Vérifiez la référence."
+            message = translate("Billet introuvable. Vérifiez la référence.")
             status = "danger"
         elif ticket.checked_in:
-            message = "Ce billet a déjà été validé à l’entrée."
+            message = translate("Ce billet a déjà été validé à l’entrée.")
             status = "warning"
         else:
             ticket.checked_in = True
             db.session.commit()
-            message = f"Entrée validée pour {ticket.acheteur}."
+            message = translate("entry_validated").format(buyer=ticket.acheteur)
             status = "success"
 
     return render_template("controle_entree.html", ticket=ticket, message=message, status=status)
@@ -638,25 +903,106 @@ def controle_entree():
 def users():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
-        password = request.form.get("password", "")
+        password = request.form.get("password", "").strip() or generate_temporary_password()
+        email = request.form.get("email", "").strip()
+        telephone = request.form.get("telephone", "").strip()
         role = request.form.get("role", "vendeur")
         photo = request.form.get("photo", "")
         if photo and not photo.startswith("data:image/"):
             photo = ""
 
-        if username and password:
+        if username and password and email and telephone:
             if User.query.filter_by(username=username).first():
-                flash("Ce nom d’utilisateur existe déjà.", "danger")
+                flash(translate("duplicate_user"), "danger")
             else:
-                user = User(username=username, password=password, role=role, photo=photo or None)
+                user = User(username=username, password=password, role=role, photo=photo or None, email=email, telephone=telephone)
                 db.session.add(user)
                 db.session.commit()
-                flash(f"Utilisateur {username} créé avec le rôle {role}.", "success")
+                try:
+                    sent = send_user_password(user, password)
+                except (OSError, smtplib.SMTPException):
+                    sent = False
+                message_key = "user_created_sent" if sent else "user_created_local"
+                flash(translate(message_key).format(username=username, role=role, password=password), "success")
         else:
-            flash("Merci de remplir le nom et le mot de passe.", "danger")
+            flash("Veuillez remplir le nom, l’email, le téléphone et le mot de passe." if current_language() == "fr" else "Please fill in the username, email, phone and password.", "danger")
 
     users_list = User.query.order_by(User.username).all()
     return render_template("users.html", users=users_list)
+
+
+@app.route("/users/<int:user_id>/edit", methods=["GET", "POST"])
+@login_required
+@role_required("administrateur")
+def edit_user(user_id):
+    user = User.query.get_or_404(user_id)
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip()
+        telephone = request.form.get("telephone", "").strip()
+        role = request.form.get("role", user.role)
+        password = request.form.get("password", "").strip()
+        photo = request.form.get("photo", "").strip()
+
+        duplicate = User.query.filter(User.username == username, User.id != user.id).first()
+        if not username or not email or not telephone:
+            flash("Veuillez remplir le nom, l’email et le téléphone.", "danger")
+        elif duplicate:
+            flash(translate("duplicate_user"), "danger")
+        elif user.id == session.get("user_id") and role != "administrateur":
+            flash("Vous ne pouvez pas retirer votre propre rôle administrateur.", "warning")
+        else:
+            user.username = username
+            user.email = email
+            user.telephone = telephone
+            user.role = role
+            if user.id != session.get("user_id"):
+                user.active = request.form.get("active") == "on"
+            if password:
+                user.password = password
+            if photo.startswith("data:image/"):
+                user.photo = photo
+            db.session.commit()
+            if user.id == session.get("user_id"):
+                session["username"] = user.username
+                session["user_role"] = user.role
+            flash("Utilisateur modifié avec succès.", "success")
+            return redirect(url_for("users"))
+    return render_template("edit_user.html", user=user)
+
+
+@app.route("/users/<int:user_id>/reset-password", methods=["POST"])
+@login_required
+@role_required("administrateur")
+def reset_user_password(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.role not in ("auditeur", "vendeur"):
+        flash("Seuls les comptes auditeur et vendeur peuvent être réinitialisés.", "warning")
+        return redirect(url_for("users"))
+    temporary_password = generate_temporary_password()
+    user.password = temporary_password
+    db.session.commit()
+    try:
+        sent = send_user_password(user, temporary_password, reset=True)
+    except (OSError, smtplib.SMTPException):
+        sent = False
+    message_key = "password_reset_sent" if sent else "password_reset_local"
+    flash(translate(message_key).format(username=user.username, password=temporary_password), "success")
+    return redirect(url_for("users"))
+
+
+@app.route("/users/<int:user_id>/toggle-active", methods=["POST"])
+@login_required
+@role_required("administrateur")
+def toggle_user_active(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.id == session.get("user_id"):
+        flash("Vous ne pouvez pas désactiver votre propre compte.", "warning")
+        return redirect(url_for("users"))
+    user.active = not user.active
+    db.session.commit()
+    flash(f"Le compte {user.username} est maintenant {'actif' if user.active else 'inactif'}.", "success")
+    return redirect(url_for("users"))
 
 
 with app.app_context():
@@ -682,6 +1028,20 @@ with app.app_context():
         db.session.commit()
     if "photo" not in user_columns:
         db.session.execute(text("ALTER TABLE user ADD COLUMN photo TEXT"))
+        db.session.commit()
+    if "active" not in user_columns:
+        db.session.execute(text("ALTER TABLE user ADD COLUMN active BOOLEAN DEFAULT 1"))
+        db.session.commit()
+    if "email" not in user_columns:
+        db.session.execute(text("ALTER TABLE user ADD COLUMN email VARCHAR(150) DEFAULT ''"))
+        db.session.commit()
+    if "telephone" not in user_columns:
+        db.session.execute(text("ALTER TABLE user ADD COLUMN telephone VARCHAR(30) DEFAULT ''"))
+        db.session.commit()
+
+    vente_columns = [col[1] for col in db.session.execute(text("PRAGMA table_info(vente)"))]
+    if "annulee" not in vente_columns:
+        db.session.execute(text("ALTER TABLE vente ADD COLUMN annulee BOOLEAN DEFAULT 0"))
         db.session.commit()
 
     for user in User.query.all():

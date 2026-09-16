@@ -1,29 +1,29 @@
 {% extends "base.html" %}
 
-{% block title %}Nouvelle catégorie{% endblock %}
+{% block title %}{{ _('Nouvelle catégorie') }}{% endblock %}
 
 {% block contenu %}
 <section class="form-section">
     <div class="card form-card">
-        <h2>Ajouter une catégorie</h2>
+        <h2>{{ _('Ajouter une catégorie') }}</h2>
         <form method="POST">
-            <label for="evenement_id">Événement</label>
+            <label for="evenement_id">{{ _('Événement') }}</label>
             <select id="evenement_id" name="evenement_id" required>
                 {% for event in evenements %}
                 <option value="{{ event.id }}">{{ event.nom }}</option>
                 {% endfor %}
             </select>
 
-            <label for="nom">Nom de la catégorie</label>
+            <label for="nom">{{ _('Nom de la catégorie') }}</label>
             <input id="nom" name="nom" type="text" required>
 
-            <label for="prix">Prix</label>
+            <label for="prix">{{ _('Prix') }}</label>
             <input id="prix" name="prix" type="number" min="0" step="0.01" required>
 
-            <label for="quantite">Quantité disponible</label>
+            <label for="quantite">{{ _('Quantité disponible') }}</label>
             <input id="quantite" name="quantite" type="number" min="1" required>
 
-            <button type="submit" class="primary-btn">Enregistrer</button>
+            <button type="submit" class="primary-btn">{{ _('Enregistrer') }}</button>
         </form>
     </div>
 </section>

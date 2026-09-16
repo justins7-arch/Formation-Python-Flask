@@ -8,42 +8,58 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    {% if request.endpoint != 'login' %}
     <header class="site-header">
-        <div class="container nav-wrap">
+        <div class="container brandbar">
             <a href="{{ url_for('index') if not session.get('user_id') else url_for('dashboard') }}" class="brand" aria-label="StadeControl home">
                 <img src="{{ url_for('static', filename='img/stade-communal-logo.svg') }}" alt="Logo Stade Communal" class="brand-logo">
-                <span class="brand-text">StadeControl</span>
+                <span class="brand-text"><strong>StadeControl</strong><small>GESTION DE BILLETTERIE</small></span>
             </a>
             {% if session.get('user_id') %}
-            <nav class="main-nav">
-                <a href="{{ url_for('dashboard') }}">{{ _('dashboard') }}</a>
-                {% if session.get('user_role') in ['administrateur', 'auditeur'] %}
-                <a href="{{ url_for('evenements') }}">{{ _('events') }}</a>
-                {% endif %}
-                {% if session.get('user_role') == 'administrateur' %}
-                <a href="{{ url_for('categories') }}">{{ _('categories') }}</a>
-                <a href="{{ url_for('users') }}">{{ _('users') }}</a>
-                {% endif %}
-                {% if session.get('user_role') in ['administrateur', 'vendeur'] %}
-                <a href="{{ url_for('ventes') }}">{{ _('sales') }}</a>
-                {% endif %}
-                <a href="{{ url_for('billets') }}">{{ _('tickets') }}</a>
-                {% if session.get('user_role') in ['administrateur', 'auditeur'] %}
-                <a href="{{ url_for('controle_entree') }}">{{ _('control') }}</a>
-                <a href="{{ url_for('rapports') }}">{{ _('reports') }}</a>
-                {% endif %}
-                <a href="{{ url_for('account') }}" class="account-link">{{ _('account') }} : {{ session.get('username') }}</a>
-                <a href="{{ url_for('a_propos') }}">À propos</a>
-                <a href="{{ url_for('logout') }}">{{ _('logout') }}</a>
-            </nav>
+            <div class="header-user-area">
+                <span>{{ session.get('username') }}</span>
+                <a href="{{ url_for('account') }}" class="header-avatar">{{ session.get('username')[0]|upper }}</a>
+            </div>
             {% else %}
-            <nav class="main-nav guest-nav">
-                <a href="{{ url_for('a_propos') }}">À propos</a>
-                <a href="{{ url_for('login') }}">{{ _('login') }}</a>
-            </nav>
+            <a href="{{ url_for('login') }}" class="header-login">{{ _('login') }}</a>
             {% endif %}
         </div>
+        {% if session.get('user_id') %}
+        <nav class="top-menu">
+            <div class="container top-menu-inner">
+                <button class="menu-toggle" type="button" aria-label="Ouvrir le menu" onclick="document.body.classList.toggle('menu-open')">☰</button>
+                <a class="top-menu-link" href="{{ url_for('dashboard') }}">{{ _('dashboard') }}</a>
+                <details class="top-menu-group">
+                    <summary>{{ _('SYSTÈME') }} <span>⌄</span></summary>
+                    <div class="top-menu-dropdown">
+                        <a href="{{ url_for('a_propos') }}">{{ _('about') }}</a>
+                        <a href="{{ url_for('account') }}">{{ _('account') }}</a>
+                        {% if session.get('user_role') == 'administrateur' %}
+                        <a href="{{ url_for('users') }}">Utilisateurs</a>
+                        <a href="{{ url_for('configuration') }}">{{ _('configuration') }}</a>
+                        <a href="{{ url_for('backup') }}">{{ _('backup_title') }}</a>
+                        {% endif %}
+                    </div>
+                </details>
+                <details class="top-menu-group">
+                    <summary>{{ _('OPÉRATIONS') }} <span>⌄</span></summary>
+                    <div class="top-menu-dropdown">
+                        {% if session.get('user_role') in ['administrateur', 'auditeur'] %}<a href="{{ url_for('evenements') }}">{{ _('events') }}</a>{% endif %}
+                        <a href="{{ url_for('billets') }}">{{ _('tickets') }}</a>
+                        {% if session.get('user_role') == 'administrateur' %}<a href="{{ url_for('categories') }}">{{ _('categories') }}</a>{% endif %}
+                        {% if session.get('user_role') in ['administrateur', 'vendeur'] %}<a href="{{ url_for('ventes') }}">{{ _('sales') }}</a>{% endif %}
+                        {% if session.get('user_role') in ['administrateur', 'auditeur'] %}<a href="{{ url_for('controle_entree') }}">{{ _('control') }}</a>{% endif %}
+                    </div>
+                </details>
+                {% if session.get('user_role') in ['administrateur', 'auditeur'] %}
+                <a class="top-menu-link" href="{{ url_for('rapports') }}">{{ _('reports')|upper }}</a>
+                {% endif %}
+                <a class="top-menu-link top-logout" href="{{ url_for('logout') }}">{{ _('DÉCONNEXION') }}</a>
+            </div>
+        </nav>
+        {% endif %}
     </header>
+    {% endif %}
 
     <main class="container main-content">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -58,12 +74,24 @@
 
         {% block contenu %}{% endblock %}
     </main>
+    {% if request.endpoint != 'login' %}
     <footer class="site-footer">
         <div class="container footer-content">
-            <span>© 2026 StadeControl</span>
-            <span>Tous droits réservés.</span>
-            <span>V3.0.2</span>
+            <div class="footer-brand">
+                <img src="{{ url_for('static', filename='img/stade-communal-logo.svg') }}" alt="Logo Stade Communal">
+                <span>Stade Communal</span>
+            </div>
+            <div class="footer-product">
+                <span class="footer-product-mark">▣</span>
+                <strong>StadeControl</strong>
+                <span>Version 3.0.2</span>
+            </div>
+            <div class="footer-legal">
+                <span class="copyright-mark">©</span>
+                <span>2026 StadeControl. Tous droits réservés.</span>
+            </div>
         </div>
     </footer>
+    {% endif %}
 </body>
 </html>

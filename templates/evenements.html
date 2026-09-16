@@ -1,19 +1,41 @@
 {% extends "base.html" %}
 
-{% block title %}Événements{% endblock %}
+{% block title %}{{ _('Événements') }}{% endblock %}
 
 {% block contenu %}
-<h2>{{ _('Liste des événements') }}</h2>
-<a href="{{ url_for('ajouter_evenement') }}">{{ _('Ajouter un événement') }}</a>
+<section class="management-page">
+    <div class="content-header page-heading">
+        <div>
+            <p class="eyebrow">StadeControl · Planning</p>
+            <h2>{{ _('Liste des événements') }}</h2>
+            <p class="page-subtitle">Pilotez votre programmation et suivez le remplissage de chaque événement.</p>
+        </div>
+        <a href="{{ url_for('ajouter_evenement') }}" class="primary-btn">{{ _('Ajouter un événement') }}</a>
+    </div>
 
-{% for evenement in evenements %}
-<article>
-    <h3>{{ evenement.nom }}</h3>
-    <p>Date : {{ evenement.date }}</p>
-    <p>Lieu : {{ evenement.lieu }}</p>
-    <p>Capacité : {{ evenement.capacite }} places</p>
-</article>
+    <div class="management-grid event-management-grid">
+    {% for row in evenements %}
+    <article class="management-card event-management-card">
+        <div class="management-card-top">
+            <span class="date-chip">{{ row.evenement.date }}</span>
+            <span class="event-status {% if row.taux >= 90 %}status-hot{% else %}status-open{% endif %}">
+                {% if row.taux >= 90 %}Presque complet{% else %}Ouvert{% endif %}
+            </span>
+        </div>
+        <h3>{{ row.evenement.nom }}</h3>
+        <p class="event-location">⌖ {{ row.evenement.lieu }}</p>
+        {% if row.evenement.description %}<p class="event-description">{{ row.evenement.description }}</p>{% endif %}
+        <div class="event-stat-columns">
+            <div><span>Billets vendus</span><strong>{{ row.vendus }}</strong></div>
+            <div><span>Capacité</span><strong>{{ row.evenement.capacite }}</strong></div>
+            <div><span>Catégories</span><strong>{{ row.categories }}</strong></div>
+        </div>
+        <div class="load-meta"><span>Remplissage</span><strong>{{ row.taux }}%</strong></div>
+        <div class="progress-bar"><span style="width: {{ row.taux }}%"></span></div>
+    </article>
 {% else %}
-<p>Aucun événement enregistré.</p>
+    <div class="empty-state"><strong>Aucun événement enregistré.</strong><span>Commencez par créer votre premier événement.</span></div>
 {% endfor %}
+</div>
+</section>
 {% endblock %}

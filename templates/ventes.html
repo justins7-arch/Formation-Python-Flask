@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Ventes{% endblock %}
+{% block title %}{{ _('Ventes') }}{% endblock %}
 
 {% block contenu %}
 <section class="content-header">
@@ -8,7 +8,7 @@
 </section>
 
 <form method="GET" class="filter-form">
-    <label for="evenement_id">Événement</label>
+    <label for="evenement_id">{{ _('Événement') }}</label>
     <select id="evenement_id" name="evenement_id" onchange="this.form.submit()">
         <option value="">{{ _('Sélectionner') }}</option>
         {% for event in evenements %}
@@ -19,30 +19,75 @@
 
 <div class="card form-card">
     <form method="POST">
-        <label for="evenement_id_form">Événement</label>
+        <label for="evenement_id_form">{{ _('Événement') }}</label>
         <select id="evenement_id_form" name="evenement_id" required>
             {% for event in evenements %}
             <option value="{{ event.id }}" {% if selected_event_id == event.id %}selected{% endif %}>{{ event.nom }}</option>
             {% endfor %}
         </select>
 
-        <label for="categorie_id">Catégorie</label>
+        <label for="categorie_id">{{ _('Catégorie') }}</label>
         <select id="categorie_id" name="categorie_id" required>
             {% for categorie in categories %}
             <option value="{{ categorie.id }}">{{ categorie.nom }} - {{ money(categorie.prix, categorie.evenement) }}</option>
             {% endfor %}
         </select>
 
-        <label for="acheteur">Nom du client</label>
+        <label for="acheteur">{{ _('Client') }}</label>
         <input id="acheteur" name="acheteur" type="text" required>
 
-        <label for="email">Email du client</label>
+        <label for="email">{{ _('Email') }}</label>
         <input id="email" name="email" type="email" required>
 
-        <label for="quantite">Quantité</label>
+        <label for="quantite">{{ _('Quantité') }}</label>
         <input id="quantite" name="quantite" type="number" min="1" required>
 
         <button type="submit" class="primary-btn">{{ _('Valider la vente') }}</button>
     </form>
 </div>
+
+<section class="panel recent-panel sales-history-panel">
+    <div class="panel-header">
+        <div>
+            <p class="eyebrow">Historique</p>
+            <h3>Opérations de vente</h3>
+        </div>
+    </div>
+    <div class="table-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>Référence</th>
+                    <th>Client</th>
+                    <th>Événement</th>
+                    <th>Total</th>
+                    <th>Statut</th>
+                    {% if session.get('user_role') == 'administrateur' %}<th>Action</th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for vente in ventes_liste %}
+                <tr>
+                    <td>#{{ vente.id }}</td>
+                    <td>{{ vente.acheteur }}</td>
+                    <td>{{ vente.evenement.nom }}</td>
+                    <td>{{ money(vente.total, vente.evenement) }}</td>
+                    <td>{% if vente.annulee %}<span class="status neutral">{{ _('cancelled') }}</span>{% else %}<span class="status success">Confirmée</span>{% endif %}</td>
+                    {% if session.get('user_role') == 'administrateur' %}
+                    <td>
+                        {% if not vente.annulee %}
+                        <form method="POST" action="{{ url_for('annuler_vente', vente_id=vente.id) }}" class="inline-form" onsubmit="return confirm('{{ _('confirm_cancel') }}');">
+                            <button type="submit" class="danger-action-btn">{{ _('cancel_sale') }}</button>
+                        </form>
+                        {% else %}<span class="muted-label">-</span>{% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% else %}
+                <tr><td colspan="6">Aucune opération de vente.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
 {% endblock %}

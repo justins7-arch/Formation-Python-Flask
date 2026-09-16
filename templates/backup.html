@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('backup_title') }}{% endblock %}
+
+{% block contenu %}
+<section class="management-page">
+    <div class="content-header page-heading">
+        <div>
+            <p class="eyebrow">StadeControl · Système</p>
+            <h2>{{ _('backup_title') }}</h2>
+            <p class="page-subtitle">Protégez les événements, utilisateurs, billets et rapports de votre installation.</p>
+        </div>
+    </div>
+
+    <div class="backup-grid">
+        <article class="management-card backup-card">
+            <div class="configuration-icon">↓</div>
+            <h3>{{ _('download_backup') }}</h3>
+            <p>Créez une copie locale complète de la base StadeControl.</p>
+            <a href="{{ url_for('download_backup') }}" class="primary-btn">{{ _('download_backup') }}</a>
+        </article>
+
+        <article class="management-card backup-card">
+            <div class="configuration-icon">↑</div>
+            <h3>{{ _('restore_backup') }}</h3>
+            <p>{{ _('backup_warning') }}</p>
+            <form method="POST" enctype="multipart/form-data">
+                <label for="backup_file">{{ _('choose_backup') }}</label>
+                <input id="backup_file" name="backup_file" type="file" accept=".db,.sqlite,.sqlite3" required>
+                <button type="submit" class="primary-btn">{{ _('restore_action') }}</button>
+            </form>
+        </article>
+    </div>
+</section>
+{% endblock %}

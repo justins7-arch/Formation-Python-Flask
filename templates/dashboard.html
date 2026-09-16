@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Tableau de bord{% endblock %}
+{% block title %}{{ _('Tableau de bord') }}{% endblock %}
 
 {% block contenu %}
 <section class="dashboard premium-dashboard">
@@ -72,8 +72,8 @@
         <div class="panel">
             <div class="panel-header">
                 <div>
-                    <p class="eyebrow">Ventes</p>
-                    <h3>Billets vendus par événement</h3>
+                    <p class="eyebrow">{{ _('Ventes') }}</p>
+                    <h3>{{ _('Billets vendus par événement') }}</h3>
                 </div>
             </div>
             <div class="canvas-wrap">
@@ -84,8 +84,8 @@
         <div class="panel">
             <div class="panel-header">
                 <div>
-                    <p class="eyebrow">Contrôle</p>
-                    <h3>Statut des billets</h3>
+                    <p class="eyebrow">{{ _('Contrôle') }}</p>
+                    <h3>{{ _('Statut des billets') }}</h3>
                 </div>
             </div>
             <div class="canvas-wrap donut-wrap">
@@ -99,7 +99,7 @@
             <div class="panel-header">
                 <div>
                     <p class="eyebrow">Performance</p>
-                    <h3>Revenus par catégorie</h3>
+                    <h3>{{ _('Revenus par catégorie') }}</h3>
                 </div>
             </div>
             <div class="canvas-wrap">
@@ -111,7 +111,7 @@
             <div class="panel-header">
                 <div>
                     <p class="eyebrow">Remplissage</p>
-                    <h3>Utilisation des capacités</h3>
+                    <h3>{{ _('Utilisation des capacités') }}</h3>
                 </div>
             </div>
             <div class="load-list">
@@ -142,10 +142,10 @@
         <table>
             <thead>
                 <tr>
-                    <th>Client</th>
-                    <th>Email</th>
-                    <th>Total</th>
-                    <th>Date</th>
+                    <th>{{ _('Client') }}</th>
+                    <th>{{ _('Email') }}</th>
+                    <th>{{ _('Total') }}</th>
+                    <th>{{ _('Date') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -158,7 +158,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4">Aucune vente récente.</td>
+                    <td colspan="4">{{ _('Aucune vente récente.') }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -184,7 +184,7 @@
                     <span>{{ money(ticket.prix, ticket.evenement) }}</span>
                 </div>
                 {% else %}
-                <p>Aucun billet pour le moment.</p>
+                <p>{{ _('Aucun billet pour le moment.') }}</p>
                 {% endfor %}
             </div>
         </div>
@@ -222,7 +222,7 @@ new Chart(eventCtx, {
     data: {
         labels: {{ event_labels | tojson }},
         datasets: [{
-            label: 'Billets vendus',
+            label: {{ _('Billets vendus') | tojson }},
             data: {{ event_values | tojson }},
             backgroundColor: ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'],
             borderRadius: 10
@@ -259,7 +259,7 @@ new Chart(categoryCtx, {
     data: {
         labels: {{ category_labels | tojson }},
         datasets: [{
-            label: 'Revenu (€)',
+            label: {{ _('Revenu (€)') | tojson }},
             data: {{ category_values | tojson }},
             borderColor: '#4f46e5',
             backgroundColor: 'rgba(79, 70, 229, 0.15)',

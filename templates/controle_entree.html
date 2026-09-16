@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Contrôle d'entrée{% endblock %}
+{% block title %}{{ _('Contrôle d\'entrée') }}{% endblock %}
 
 {% block contenu %}
 <section class="content-header">
@@ -9,7 +9,7 @@
 
 <div class="card form-card">
     <form method="POST">
-        <label for="reference">Référence du billet</label>
+        <label for="reference">{{ _('Référence') }}</label>
         <input id="reference" name="reference" type="text" placeholder="Ex. TCK-ABC12345" required>
         <button type="submit" class="primary-btn">{{ _('Valider l’entrée') }}</button>
     </form>
@@ -22,11 +22,11 @@
 
     {% if ticket %}
     <div class="ticket-summary">
-        <p><strong>Client :</strong> {{ ticket.acheteur }}</p>
-        <p><strong>Email :</strong> {{ ticket.email }}</p>
-        <p><strong>Catégorie :</strong> {{ ticket.categorie.nom }}</p>
-        <p><strong>Événement :</strong> {{ ticket.evenement.nom }}</p>
-        <p><strong>Statut :</strong> {{ 'Entrée validée' if ticket.checked_in else 'En attente' }}</p>
+        <p><strong>{{ _('Client') }} :</strong> {{ ticket.acheteur }}</p>
+        <p><strong>{{ _('Email') }} :</strong> {{ ticket.email }}</p>
+        <p><strong>{{ _('Catégorie') }} :</strong> {{ ticket.categorie.nom }}</p>
+        <p><strong>{{ _('Événement') }} :</strong> {{ ticket.evenement.nom }}</p>
+        <p><strong>{{ _('Statut') }} :</strong> {{ 'Checked in' if ticket.checked_in and current_language == 'en' else ('Entrée validée' if ticket.checked_in else _('En attente')) }}</p>
     </div>
     {% endif %}
 </div>

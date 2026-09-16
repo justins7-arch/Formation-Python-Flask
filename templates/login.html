@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Connexion{% endblock %}
+{% block title %}{{ _('Connexion') }}{% endblock %}
 
 {% block contenu %}
 <section class="auth-box auth-login-shell">
@@ -13,15 +13,15 @@
             </div>
         </div>
 
-        <h2>Connexion</h2>
+        <h2>{{ _('Connexion') }}</h2>
         <form method="POST">
-            <label for="username">Nom d'utilisateur</label>
+            <label for="username">{{ _('Nom d\'utilisateur') }}</label>
             <input id="username" name="username" type="text" required>
 
-            <label for="password">Mot de passe</label>
+            <label for="password">{{ _('Mot de passe') }}</label>
             <input id="password" name="password" type="password" required>
 
-            <button type="submit" class="primary-btn">Se connecter</button>
+            <button type="submit" class="primary-btn">{{ _('login') }}</button>
         </form>
         <div class="auth-info">
             <strong>Compte de démonstration :</strong>

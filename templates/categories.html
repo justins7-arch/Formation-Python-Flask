@@ -1,33 +1,50 @@
 {% extends "base.html" %}
 
-{% block title %}Catégories & Prix{% endblock %}
+{% block title %}{{ _('Catégories & Prix') }}{% endblock %}
 
 {% block contenu %}
-<section class="content-header">
-    <h2>{{ _('Catégories et prix') }}</h2>
-    <a href="{{ url_for('ajouter_categorie') }}" class="primary-btn">{{ _('Ajouter une catégorie') }}</a>
-</section>
+<section class="management-page">
+    <div class="content-header page-heading">
+        <div>
+            <p class="eyebrow">StadeControl · Tarification</p>
+            <h2>{{ _('Catégories et prix') }}</h2>
+            <p class="page-subtitle">Organisez vos offres, vos tarifs et vos stocks par événement.</p>
+        </div>
+        <a href="{{ url_for('ajouter_categorie') }}" class="primary-btn">{{ _('Ajouter une catégorie') }}</a>
+    </div>
 
-<form class="filter-form" method="GET">
-    <label for="evenement_id">Événement</label>
-    <select id="evenement_id" name="evenement_id" onchange="this.form.submit()">
-        <option value="">Tous les événements</option>
-        {% for event in evenements %}
-        <option value="{{ event.id }}" {% if selected_event_id == event.id %}selected{% endif %}>{{ event.nom }}</option>
-        {% endfor %}
-    </select>
-</form>
+    <form class="panel category-filter" method="GET">
+        <div>
+            <label for="evenement_id">{{ _('Événement') }}</label>
+            <select id="evenement_id" name="evenement_id" onchange="this.form.submit()">
+                <option value="">Tous les événements</option>
+                {% for event in evenements %}
+                <option value="{{ event.id }}" {% if selected_event_id == event.id %}selected{% endif %}>{{ event.nom }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <span class="filter-result">{{ categories|length }} catégorie(s)</span>
+    </form>
 
-<div class="card-list">
-    {% for categorie in categories %}
-    <article class="card">
-        <h3>{{ categorie.nom }}</h3>
-        <p><strong>Événement :</strong> {{ categorie.evenement.nom }}</p>
-        <p><strong>Prix :</strong> {{ money(categorie.prix, categorie.evenement) }}</p>
-        <p><strong>Quantité :</strong> {{ categorie.quantite }}</p>
+    <div class="management-grid category-management-grid">
+    {% for row in categories %}
+    <article class="management-card category-management-card">
+        <div class="category-icon">▦</div>
+        <div class="category-card-heading">
+            <div><h3>{{ row.categorie.nom }}</h3><span>{{ row.categorie.evenement.nom }}</span></div>
+            <strong class="category-price">{{ money(row.categorie.prix, row.categorie.evenement) }}</strong>
+        </div>
+        <div class="category-stock">
+            <div><span>Disponibles</span><strong>{{ row.restants }}</strong></div>
+            <div><span>Vendus</span><strong>{{ row.vendus }}</strong></div>
+            <div><span>Total</span><strong>{{ row.categorie.quantite }}</strong></div>
+        </div>
+        <div class="load-meta"><span>Stock utilisé</span><strong>{{ ((row.vendus / row.categorie.quantite) * 100)|round|int if row.categorie.quantite else 0 }}%</strong></div>
+        <div class="progress-bar"><span style="width: {{ ((row.vendus / row.categorie.quantite) * 100)|round|int if row.categorie.quantite else 0 }}%"></span></div>
     </article>
     {% else %}
-    <p>Aucune catégorie enregistrée.</p>
+    <div class="empty-state"><strong>Aucune catégorie enregistrée.</strong><span>Ajoutez une catégorie pour commencer votre tarification.</span></div>
     {% endfor %}
-</div>
+    </div>
+</section>
 {% endblock %}

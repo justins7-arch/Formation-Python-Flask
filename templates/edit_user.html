@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Modifier utilisateur{% endblock %}
+
+{% block contenu %}
+<section class="management-page">
+    <div class="content-header page-heading">
+        <div>
+            <p class="eyebrow">StadeControl · Utilisateurs</p>
+            <h2>Modifier l'utilisateur</h2>
+            <p class="page-subtitle">Mettez à jour les informations et les droits de {{ user.username }}.</p>
+        </div>
+    </div>
+
+    <div class="card form-card user-edit-card">
+        <form method="POST">
+            <label for="username">{{ _('Nom d\'utilisateur') }}</label>
+            <input id="username" name="username" type="text" value="{{ user.username }}" required>
+
+            <label for="email">{{ _('Email') }}</label>
+            <input id="email" name="email" type="email" value="{{ user.email }}" required>
+
+            <label for="telephone">{{ _('phone') }}</label>
+            <input id="telephone" name="telephone" type="tel" value="{{ user.telephone }}" required>
+
+            <label for="role">{{ _('role') }}</label>
+            <select id="role" name="role">
+                <option value="administrateur" {% if user.role == 'administrateur' %}selected{% endif %}>{{ _('Administrateur') }}</option>
+                <option value="auditeur" {% if user.role == 'auditeur' %}selected{% endif %}>{{ _('Auditeur') }}</option>
+                <option value="vendeur" {% if user.role == 'vendeur' %}selected{% endif %}>{{ _('Vendeur') }}</option>
+            </select>
+
+            {% if user.id != session.get('user_id') %}
+            <label class="checkbox-line"><input type="checkbox" name="active" {% if user.active %}checked{% endif %}> {{ _('active') }}</label>
+            {% endif %}
+
+            <label for="password">{{ _('Mot de passe') }}</label>
+            <input id="password" name="password" type="password" placeholder="Laisser vide pour conserver le mot de passe actuel">
+
+            <button type="submit" class="primary-btn">{{ _('Enregistrer') }}</button>
+            <a href="{{ url_for('users') }}" class="secondary-btn">Annuler</a>
+        </form>
+    </div>
+</section>
+{% endblock %}

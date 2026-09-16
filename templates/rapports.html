@@ -22,7 +22,7 @@
     <div class="panel report-filter-panel">
         <form method="GET" class="report-filter-form">
             <div>
-                <label for="period">Type de rapport</label>
+                <label for="period">{{ _('Type de rapport') }}</label>
                 <select id="period" name="period" onchange="toggleReportDate(this.value)">
                     <option value="day" {% if report.period == 'day' %}selected{% endif %}>{{ _('Rapport journalier') }}</option>
                     <option value="month" {% if report.period == 'month' %}selected{% endif %}>{{ _('Rapport mensuel') }}</option>
@@ -33,7 +33,7 @@
                 <input id="date" type="date" name="date" value="{{ report.selected if report.period == 'day' else '' }}">
             </div>
             <div id="month-field" {% if report.period != 'month' %}hidden{% endif %}>
-                <label for="month">Mois</label>
+                <label for="month">{{ _('Mois') }}</label>
                 <input id="month" type="month" name="month" value="{{ report.selected if report.period == 'month' else '' }}">
             </div>
             <button class="primary-btn" type="submit">{{ _('Filtrer') }}</button>
@@ -69,12 +69,12 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>Client</th>
-                        <th>Email</th>
-                        <th>Événement</th>
-                        <th>Billets</th>
-                        <th>Total</th>
+                        <th>{{ _('Date') }}</th>
+                        <th>{{ _('Client') }}</th>
+                        <th>{{ _('Email') }}</th>
+                        <th>{{ _('Événement') }}</th>
+                        <th>{{ _('Billets') }}</th>
+                        <th>{{ _('Total') }}</th>
                     </tr>
                 </thead>
                 <tbody>
