@@ -30,7 +30,7 @@
                 <button class="menu-toggle" type="button" aria-label="Ouvrir le menu" onclick="document.body.classList.toggle('menu-open')">☰</button>
                 <a class="top-menu-link" href="{{ url_for('dashboard') }}">{{ _('dashboard') }}</a>
                 <details class="top-menu-group">
-                    <summary>{{ _('SYSTÈME') }} <span>⌄</span></summary>
+                    <summary>{{ _('system') }} <span>⌄</span></summary>
                     <div class="top-menu-dropdown">
                         <a href="{{ url_for('a_propos') }}">{{ _('about') }}</a>
                         <a href="{{ url_for('account') }}">{{ _('account') }}</a>
@@ -42,7 +42,7 @@
                     </div>
                 </details>
                 <details class="top-menu-group">
-                    <summary>{{ _('OPÉRATIONS') }} <span>⌄</span></summary>
+                    <summary>{{ _('operations') }} <span>⌄</span></summary>
                     <div class="top-menu-dropdown">
                         {% if session.get('user_role') in ['administrateur', 'auditeur'] %}<a href="{{ url_for('evenements') }}">{{ _('events') }}</a>{% endif %}
                         <a href="{{ url_for('billets') }}">{{ _('tickets') }}</a>
@@ -51,12 +51,22 @@
                         {% if session.get('user_role') in ['administrateur', 'auditeur'] %}<a href="{{ url_for('controle_entree') }}">{{ _('control') }}</a>{% endif %}
                     </div>
                 </details>
-                {% if session.get('user_role') in ['administrateur', 'auditeur'] %}
-                <a class="top-menu-link" href="{{ url_for('rapports') }}">{{ _('reports')|upper }}</a>
+                {% if session.get('user_role') in ['administrateur', 'auditeur', 'vendeur'] %}
+                <a class="top-menu-link" href="{{ url_for('rapports') }}">{{ _('reports') }}</a>
                 {% endif %}
                 <a class="top-menu-link top-logout" href="{{ url_for('logout') }}">{{ _('DÉCONNEXION') }}</a>
             </div>
         </nav>
+        <script>
+        document.querySelectorAll('.top-menu-group').forEach((group) => {
+            group.addEventListener('toggle', () => {
+                if (!group.open) return;
+                document.querySelectorAll('.top-menu-group').forEach((otherGroup) => {
+                    if (otherGroup !== group) otherGroup.open = false;
+                });
+            });
+        });
+        </script>
         {% endif %}
     </header>
     {% endif %}

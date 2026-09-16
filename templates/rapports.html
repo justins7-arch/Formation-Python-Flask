@@ -10,10 +10,10 @@
             <h2>{{ _('Rapports de ventes') }}</h2>
         </div>
         <div class="report-downloads">
-            <a class="export-btn export-pdf" href="{{ url_for('export_pdf', period=report.period, date=report.selected, month=report.selected) }}" download>
+            <a class="export-btn export-pdf" href="{{ url_for('export_pdf', period=report.period, date=report.selected, month=report.selected, seller_id=report.seller_id) }}" download>
                 <span>PDF</span> {{ _('Télécharger PDF') }}
             </a>
-            <a class="export-btn export-excel" href="{{ url_for('export_excel', period=report.period, date=report.selected, month=report.selected) }}" download>
+            <a class="export-btn export-excel" href="{{ url_for('export_excel', period=report.period, date=report.selected, month=report.selected, seller_id=report.seller_id) }}" download>
                 <span>XLSX</span> {{ _('Télécharger Excel') }}
             </a>
         </div>
@@ -28,6 +28,17 @@
                     <option value="month" {% if report.period == 'month' %}selected{% endif %}>{{ _('Rapport mensuel') }}</option>
                 </select>
             </div>
+            {% if report_user.role == 'administrateur' %}
+            <div>
+                <label for="seller_id">Vendeur</label>
+                <select id="seller_id" name="seller_id">
+                    <option value="">Tous les vendeurs</option>
+                    {% for seller in sellers %}
+                    <option value="{{ seller.id }}" {% if report.seller_id == seller.id %}selected{% endif %}>{{ seller.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
             <div id="day-field" {% if report.period != 'day' %}hidden{% endif %}>
                 <label for="date">Date</label>
                 <input id="date" type="date" name="date" value="{{ report.selected if report.period == 'day' else '' }}">
@@ -38,6 +49,12 @@
             </div>
             <button class="primary-btn" type="submit">{{ _('Filtrer') }}</button>
         </form>
+    </div>
+
+    <div class="report-context-line">
+        <span>Stade : <strong>Stade Communal</strong></span>
+        <span>Événement(s) : <strong>{{ report.event_names|join(', ') if report.event_names else 'Tous les événements' }}</strong></span>
+        <span>Vendeur : <strong>{{ report.seller_name }}</strong></span>
     </div>
 
     <div class="report-summary-grid">

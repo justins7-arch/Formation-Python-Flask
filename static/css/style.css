@@ -136,8 +136,9 @@ body {
 .top-menu-inner {
     min-height: 64px;
     display: flex;
-    align-items: stretch;
+    align-items: center;
     gap: 6px;
+    white-space: nowrap;
 }
 
 .menu-toggle {
@@ -162,6 +163,13 @@ body {
     letter-spacing: 0.02em;
     cursor: pointer;
     list-style: none;
+    white-space: nowrap;
+    min-height: 64px;
+}
+
+.top-menu-group {
+    display: flex;
+    align-items: center;
 }
 
 .top-menu-link:hover,
@@ -1480,6 +1488,26 @@ th {
     color: var(--muted);
 }
 
+.stadium-map-panel {
+    margin-top: 2px;
+}
+
+.stadium-map {
+    width: 100%;
+    height: 360px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.map-empty-state {
+    padding: 28px;
+    border: 1px dashed rgba(111, 71, 45, 0.25);
+    border-radius: 16px;
+    color: var(--muted);
+    text-align: center;
+}
+
 .card {
     padding: 20px;
 }
@@ -1857,6 +1885,17 @@ select {
     gap: 18px;
 }
 
+.report-context-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 24px;
+    padding: 13px 16px;
+    border-left: 3px solid var(--deep-green);
+    background: rgba(23, 107, 87, 0.07);
+    color: var(--muted);
+    font-size: 0.86rem;
+}
+
 .table-scroll {
     overflow-x: auto;
 }
@@ -1921,6 +1960,7 @@ select {
     .top-menu-inner {
         display: block;
         padding: 6px 0;
+        white-space: normal;
     }
 
     .menu-toggle {

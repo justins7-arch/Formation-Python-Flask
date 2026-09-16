@@ -18,9 +18,10 @@ from sqlalchemy import func, text
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.pagesizes import A4, landscape, portrait
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Spacer, Table, TableStyle, Paragraph
+from reportlab.pdfbase.pdfmetrics import stringWidth
 
 
 app = Flask(__name__)
@@ -68,7 +69,7 @@ TRANSLATIONS = {
         "Revenus par catégorie": "Revenus par catégorie", "Utilisation des capacités": "Utilisation des capacités",
         "Créer un événement": "Créer un événement", "Ajouter une catégorie": "Ajouter une catégorie",
         "Vente de billets": "Vente de billets", "Billet": "Billet",
-        "about": "À propos", "configuration": "Configuration", "À propos - StadeControl": "À propos - StadeControl", "SYSTÈME": "SYSTÈME", "OPÉRATIONS": "OPÉRATIONS",
+        "about": "À propos", "configuration": "Configuration", "system": "Système", "operations": "Opérations", "À propos - StadeControl": "À propos - StadeControl", "SYSTÈME": "SYSTÈME", "OPÉRATIONS": "OPÉRATIONS",
         "DÉCONNEXION": "DÉCONNEXION", "Contrôle": "Contrôle", "Accueil": "Accueil",
         "Référence": "Référence", "Client": "Client", "Email": "Email", "Catégorie": "Catégorie", "Prix": "Prix",
         "Statut": "Statut", "QR": "QR", "Voir QR": "Voir QR", "Validé": "Validé", "En attente": "En attente",
@@ -141,7 +142,7 @@ TRANSLATIONS = {
         "Revenus par catégorie": "Revenue by category", "Utilisation des capacités": "Capacity usage",
         "Créer un événement": "Create an event", "Ajouter une catégorie": "Add a category",
         "Vente de billets": "Ticket sales", "Billet": "Ticket",
-        "about": "About", "configuration": "Configuration", "À propos - StadeControl": "About - StadeControl", "SYSTÈME": "SYSTEM", "OPÉRATIONS": "OPERATIONS",
+        "about": "About", "configuration": "Configuration", "system": "System", "operations": "Operations", "À propos - StadeControl": "About - StadeControl", "SYSTÈME": "SYSTEM", "OPÉRATIONS": "OPERATIONS",
         "DÉCONNEXION": "LOG OUT", "Contrôle": "Check-in", "Accueil": "Home",
         "Référence": "Reference", "Client": "Customer", "Email": "Email", "Catégorie": "Category", "Prix": "Price",
         "Statut": "Status", "QR": "QR", "Voir QR": "View QR", "Validé": "Validated", "En attente": "Pending",
@@ -253,6 +254,8 @@ class Evenement(db.Model):
     capacite = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text, default="")
     taux_conversion = db.Column(db.Float, nullable=False, default=2800)
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
     categories = db.relationship("Categorie", backref="evenement", cascade="all, delete-orphan")
     tickets = db.relationship("Ticket", backref="evenement", cascade="all, delete-orphan")
     ventes = db.relationship("Vente", backref="evenement", cascade="all, delete-orphan")
@@ -277,6 +280,8 @@ class Vente(db.Model):
     total = db.Column(db.Float, nullable=False, default=0.0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     annulee = db.Column(db.Boolean, nullable=False, default=False)
+    vendeur_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    vendeur = db.relationship("User", backref="ventes_enregistrees")
     tickets = db.relationship("Ticket", backref="vente", cascade="all, delete-orphan")
 
 
@@ -612,13 +617,22 @@ def report_period():
 
 def report_data():
     period, selected, start, end, label = report_period()
-    sales = Vente.query.filter(
+    current_user = User.query.get(session["user_id"])
+    seller_id = request.args.get("seller_id", type=int)
+    query = Vente.query.filter(
         Vente.created_at >= start,
         Vente.created_at < end,
         Vente.annulee.is_(False),
-    ).order_by(Vente.created_at.desc()).all()
+    )
+    if current_user.role == "vendeur":
+        seller_id = current_user.id
+        query = query.filter(Vente.vendeur_id == current_user.id)
+    elif current_user.role == "administrateur" and seller_id:
+        query = query.filter(Vente.vendeur_id == seller_id)
+    sales = query.order_by(Vente.created_at.desc()).all()
     total_revenue = sum(float(sale.total or 0) for sale in sales)
     total_tickets = sum(len(sale.tickets) for sale in sales)
+    seller = User.query.get(seller_id) if seller_id else None
     return {
         "period": period,
         "selected": selected,
@@ -626,19 +640,26 @@ def report_data():
         "sales": sales,
         "total_revenue": total_revenue,
         "total_tickets": total_tickets,
+        "seller_id": seller_id,
+        "seller_name": seller.username if seller else (current_user.username if current_user.role == "vendeur" else "Tous les vendeurs"),
+        "event_names": sorted({sale.evenement.nom for sale in sales}),
+        "exporter": current_user.username,
+        "exported_at": datetime.now(),
     }
 
 
 @app.route("/rapports")
 @login_required
-@role_required("administrateur", "auditeur")
+@role_required("administrateur", "auditeur", "vendeur")
 def rapports():
-    return render_template("rapports.html", report=report_data())
+    current_user = User.query.get(session["user_id"])
+    sellers = User.query.filter(User.role == "vendeur", User.active.is_(True)).order_by(User.username).all()
+    return render_template("rapports.html", report=report_data(), sellers=sellers, report_user=current_user)
 
 
 @app.route("/rapports/export/excel")
 @login_required
-@role_required("administrateur", "auditeur")
+@role_required("administrateur", "auditeur", "vendeur")
 def export_excel():
     report = report_data()
     workbook = Workbook()
@@ -646,19 +667,24 @@ def export_excel():
     sheet.title = "Rapport ventes"
     sheet.append(["StadeControl - Stade Communal"])
     sheet.append(["Rapport", report["label"]])
+    sheet.append(["Stade", "Stade Communal"])
+    sheet.append(["Evenement(s)", ", ".join(report["event_names"]) or "Tous les événements"])
+    sheet.append(["Vendeur filtre", report["seller_name"]])
+    sheet.append(["Exporté par", report["exporter"]])
+    sheet.append(["Date et heure d'export", report["exported_at"].strftime("%Y-%m-%d %H:%M:%S")])
     sheet.append([])
-    sheet.append(["Date", "Client", "Email", "Evenement", "Billets", "Total"])
+    sheet.append(["Date", "Client", "Email", "Evenement", "Vendeur", "Billets", "Total"])
     for sale in report["sales"]:
         sheet.append([
             sale.created_at.strftime("%Y-%m-%d %H:%M"), sale.acheteur, sale.email,
-            sale.evenement.nom, len(sale.tickets), sale.total,
+            sale.evenement.nom, sale.vendeur.username if sale.vendeur else "Ancienne vente", len(sale.tickets), sale.total,
         ])
     sheet.append([])
-    sheet.append(["Totaux", "", "", "", report["total_tickets"], report["total_revenue"]])
+    sheet.append(["Totaux", "", "", "", "", report["total_tickets"], report["total_revenue"]])
     sheet["A1"].font = Font(bold=True, size=16, color="FFFFFF")
     for cell in sheet["1:1"]:
         cell.fill = PatternFill("solid", fgColor="1D1B2D")
-    for cell in sheet["4:4"]:
+    for cell in sheet["9:9"]:
         cell.font = Font(bold=True, color="FFFFFF")
         cell.fill = PatternFill("solid", fgColor="8B5E3C")
     for column in sheet.columns:
@@ -672,30 +698,92 @@ def export_excel():
 
 @app.route("/rapports/export/pdf")
 @login_required
-@role_required("administrateur", "auditeur")
+@role_required("administrateur", "auditeur", "vendeur")
 def export_pdf():
     report = report_data()
     output = BytesIO()
-    document = SimpleDocTemplate(output, pagesize=landscape(A4), rightMargin=28, leftMargin=28, topMargin=28, bottomMargin=28)
+    document = SimpleDocTemplate(output, pagesize=portrait(A4), rightMargin=28, leftMargin=28, topMargin=82, bottomMargin=45)
     styles = getSampleStyleSheet()
-    content = [Paragraph("StadeControl - Stade Communal", styles["Title"]), Paragraph(f"Rapport des ventes : {report['label']}", styles["Heading2"]), Spacer(1, 14)]
-    rows = [["Date", "Client", "Email", "Evenement", "Billets", "Total"]]
+    table_style = styles["Normal"].clone("report-table")
+    table_style.fontSize = 7
+    table_style.leading = 8
+    header_style = styles["Normal"].clone("report-table-header")
+    header_style.fontSize = 7
+    header_style.leading = 8
+    header_style.textColor = colors.white
+    header_style.fontName = "Helvetica-Bold"
+    metadata = [
+        ["Stade", "Stade Communal", "Période", report["label"]],
+        ["Événement(s)", ", ".join(report["event_names"]) or "Tous les événements", "Vendeur", report["seller_name"]],
+        ["Exporté par", report["exporter"], "Date et heure", report["exported_at"].strftime("%d/%m/%Y %H:%M:%S")],
+    ]
+    metadata_table = Table(metadata, colWidths=[70, 190, 70, 190])
+    metadata_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#F1E7DF")),
+        ("BACKGROUND", (2, 0), (2, -1), colors.HexColor("#F1E7DF")),
+        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+        ("FONTNAME", (2, 0), (2, -1), "Helvetica-Bold"),
+        ("GRID", (0, 0), (-1, -1), 0.35, colors.HexColor("#D9CEC5")),
+        ("PADDING", (0, 0), (-1, -1), 6),
+    ]))
+    content = [Paragraph(f"Rapport des ventes : {report['label']}", styles["Heading2"]), metadata_table, Spacer(1, 14)]
+    rows = [[Paragraph(label, header_style) for label in ["Date", "Client", "Email", "Événement", "Vendeur", "Billets", "Total"]]]
     for sale in report["sales"]:
         rows.append([
-            sale.created_at.strftime("%Y-%m-%d %H:%M"), sale.acheteur, sale.email,
-            sale.evenement.nom, str(len(sale.tickets)), money(sale.total, sale.evenement),
+            Paragraph(sale.created_at.strftime("%d/%m/%Y %H:%M"), table_style),
+            Paragraph(sale.acheteur, table_style), Paragraph(sale.email, table_style),
+            Paragraph(sale.evenement.nom, table_style),
+            Paragraph(sale.vendeur.username if sale.vendeur else "Ancienne vente", table_style),
+            Paragraph(str(len(sale.tickets)), table_style), Paragraph(money(sale.total, sale.evenement), table_style),
         ])
-    rows.append(["Totaux", "", "", "", str(report["total_tickets"]), money(report["total_revenue"])])
-    table = Table(rows, repeatRows=1)
+    rows.append([Paragraph("Totaux", table_style), "", "", "", "", Paragraph(str(report["total_tickets"]), table_style), Paragraph(money(report["total_revenue"]), table_style)])
+    table = Table(rows, colWidths=[63, 70, 92, 104, 75, 45, 62], repeatRows=1)
     table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1D1B2D")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
         ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#F1E7DF")),
         ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#D9CEC5")),
-        ("PADDING", (0, 0), (-1, -1), 7),
+        ("PADDING", (0, 0), (-1, -1), 5),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -2), [colors.white, colors.HexColor("#F8F8F8")]),
     ]))
     content.append(table)
-    document.build(content)
+    content.extend([
+        Spacer(1, 55),
+        Paragraph("CERTIFICATION", styles["Heading3"]),
+        Spacer(1, 6),
+        Paragraph(f"Généré par : {report['exporter']}    |    Stade : Stade Communal", styles["Normal"]),
+        Spacer(1, 10),
+        Paragraph("Revu par : ________________________________    Date : ____________________", styles["Normal"]),
+        Spacer(1, 8),
+        Paragraph("Approuvé par : ______________________________    Date : ____________________", styles["Normal"]),
+    ])
+    def draw_pdf_header_footer(canvas, doc):
+        canvas.saveState()
+        width, height = portrait(A4)
+        canvas.setFillColor(colors.HexColor("#176B57"))
+        canvas.circle(42, height - 35, 17, fill=1, stroke=0)
+        canvas.setFillColor(colors.white)
+        canvas.setFont("Helvetica-Bold", 14)
+        canvas.drawCentredString(42, height - 40, "S")
+        canvas.setFillColor(colors.HexColor("#1D1B2D"))
+        canvas.setFont("Helvetica-Bold", 13)
+        canvas.drawString(68, height - 31, "StadeControl - Stade Communal")
+        canvas.setFont("Helvetica", 8.5)
+        canvas.drawString(68, height - 45, f"Événement(s): {', '.join(report['event_names']) or 'Tous les événements'}")
+        canvas.drawRightString(width - 28, height - 31, f"Exporté par: {report['exporter']}")
+        canvas.drawRightString(width - 28, height - 45, f"Export: {report['exported_at'].strftime('%d/%m/%Y %H:%M:%S')}")
+        canvas.setStrokeColor(colors.HexColor("#176B57"))
+        canvas.line(28, height - 58, width - 28, height - 58)
+        canvas.setStrokeColor(colors.HexColor("#D9CEC5"))
+        canvas.line(28, 32, width - 28, 32)
+        canvas.setFillColor(colors.HexColor("#555555"))
+        canvas.setFont("Helvetica", 8)
+        canvas.drawString(28, 19, "StadeControl - Stade Communal")
+        canvas.drawRightString(width - 28, 19, f"Date d'exportation: {report['exported_at'].strftime('%d/%m/%Y')} | Page {doc.page}")
+        canvas.restoreState()
+
+    document.build(content, onFirstPage=draw_pdf_header_footer, onLaterPages=draw_pdf_header_footer)
     output.seek(0)
     filename = f"rapport-{report['period']}-{report['selected']}.pdf"
     return send_file(output, as_attachment=True, download_name=filename, mimetype="application/pdf")
@@ -715,8 +803,20 @@ def evenements():
             "vendus": vendus,
             "taux": min(round((vendus / capacite) * 100), 100),
             "categories": len(evenement.categories),
+            "latitude": evenement.latitude,
+            "longitude": evenement.longitude,
         })
-    return render_template("evenements.html", evenements=event_rows)
+    map_events = [
+        {
+            "nom": row["evenement"].nom,
+            "lieu": row["evenement"].lieu,
+            "date": row["evenement"].date,
+            "latitude": row["latitude"],
+            "longitude": row["longitude"],
+        }
+        for row in event_rows if row["latitude"] is not None and row["longitude"] is not None
+    ]
+    return render_template("evenements.html", evenements=event_rows, map_events=map_events)
 
 
 @app.route("/evenements/ajouter", methods=["GET", "POST"])
@@ -731,6 +831,8 @@ def ajouter_evenement():
             capacite=int(request.form["capacite"]),
             description=request.form.get("description", ""),
             taux_conversion=float(request.form.get("taux_conversion", 2800) or 2800),
+            latitude=float(request.form["latitude"]) if request.form.get("latitude") else None,
+            longitude=float(request.form["longitude"]) if request.form.get("longitude") else None,
         )
         db.session.add(nouveau_evenement)
         db.session.commit()
@@ -805,6 +907,7 @@ def ventes():
             acheteur=acheteur,
             email=email,
             total=categorie.prix * quantite,
+            vendeur_id=session.get("user_id"),
         )
         db.session.add(vente)
         db.session.flush()
@@ -1015,6 +1118,12 @@ with app.app_context():
     if "taux_conversion" not in evenement_columns:
         db.session.execute(text("ALTER TABLE evenement ADD COLUMN taux_conversion FLOAT DEFAULT 2800"))
         db.session.commit()
+    if "latitude" not in evenement_columns:
+        db.session.execute(text("ALTER TABLE evenement ADD COLUMN latitude FLOAT"))
+        db.session.commit()
+    if "longitude" not in evenement_columns:
+        db.session.execute(text("ALTER TABLE evenement ADD COLUMN longitude FLOAT"))
+        db.session.commit()
 
     user_columns = [col[1] for col in db.session.execute(text("PRAGMA table_info(user)"))]
     if "role" not in user_columns:
@@ -1042,6 +1151,9 @@ with app.app_context():
     vente_columns = [col[1] for col in db.session.execute(text("PRAGMA table_info(vente)"))]
     if "annulee" not in vente_columns:
         db.session.execute(text("ALTER TABLE vente ADD COLUMN annulee BOOLEAN DEFAULT 0"))
+        db.session.commit()
+    if "vendeur_id" not in vente_columns:
+        db.session.execute(text("ALTER TABLE vente ADD COLUMN vendeur_id INTEGER"))
         db.session.commit()
 
     for user in User.query.all():

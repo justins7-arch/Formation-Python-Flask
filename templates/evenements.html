@@ -37,5 +37,39 @@
     <div class="empty-state"><strong>Aucun événement enregistré.</strong><span>Commencez par créer votre premier événement.</span></div>
 {% endfor %}
 </div>
+
+    <section class="panel stadium-map-panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">StadeControl · Localisation</p>
+                <h3>Carte des stades</h3>
+                <p class="page-subtitle">Les marqueurs utilisent uniquement les coordonnées enregistrées avec vos événements.</p>
+            </div>
+        </div>
+        {% if map_events %}
+        <div id="stadium-map" class="stadium-map"></div>
+        {% else %}
+        <div class="map-empty-state">Aucune coordonnée GPS n’est encore enregistrée. Ajoutez latitude et longitude lors de la création d’un événement.</div>
+        {% endif %}
+    </section>
 </section>
+{% if map_events %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const stadiumEvents = {{ map_events | tojson }};
+const map = L.map('stadium-map');
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+const bounds = [];
+stadiumEvents.forEach((event) => {
+    const position = [event.latitude, event.longitude];
+    bounds.push(position);
+    L.marker(position).addTo(map).bindPopup(`<strong>${event.nom}</strong><br>${event.lieu}<br>${event.date}`);
+});
+map.fitBounds(bounds, { padding: [28, 28] });
+</script>
+{% endif %}
 {% endblock %}
