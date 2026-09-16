@@ -3,8 +3,16 @@
 {% block title %}Connexion{% endblock %}
 
 {% block contenu %}
-<section class="auth-box">
-    <div class="card auth-card">
+<section class="auth-box auth-login-shell">
+    <div class="card auth-card premium-auth-card">
+        <div class="auth-brand">
+            <img src="{{ url_for('static', filename='img/stade-communal-logo.svg') }}" alt="Logo Stade Communal" class="brand-logo auth-logo">
+            <div>
+                <strong>StadeControl</strong>
+                <small>Stade Communal · Billetterie</small>
+            </div>
+        </div>
+
         <h2>Connexion</h2>
         <form method="POST">
             <label for="username">Nom d'utilisateur</label>

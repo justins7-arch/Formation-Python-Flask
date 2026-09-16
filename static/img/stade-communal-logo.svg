@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">Stade Communal</title>
+  <desc id="desc">Embleme premium du Stade Communal avec tribunes et ballon</desc>
+  <defs>
+    <linearGradient id="gold" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f4d59b"/>
+      <stop offset="1" stop-color="#a96e3d"/>
+    </linearGradient>
+    <linearGradient id="night" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#312542"/>
+      <stop offset="1" stop-color="#171323"/>
+    </linearGradient>
+  </defs>
+  <circle cx="80" cy="80" r="74" fill="url(#night)" stroke="url(#gold)" stroke-width="5"/>
+  <path d="M28 88h104M35 101h90M45 114h70" fill="none" stroke="#f4d59b" stroke-width="4" stroke-linecap="round"/>
+  <path d="M39 82V55l14 9 14-9 13 9 14-9 14 9 13-9v27" fill="none" stroke="#f4d59b" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M35 122h90" stroke="#a96e3d" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="80" cy="38" r="13" fill="#fffdfb" stroke="url(#gold)" stroke-width="3"/>
+  <path d="M80 25v26M67 38h26M71 29l18 18M89 29 71 47" stroke="#312542" stroke-width="2"/>
+  <path d="M52 133h56" stroke="#f4d59b" stroke-width="3" stroke-linecap="round"/>
+</svg>

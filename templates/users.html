@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Utilisateurs{% endblock %}
+
+{% block contenu %}
+<section class="content-header">
+    <h2>Gestion des utilisateurs</h2>
+</section>
+
+<div class="two-column-layout">
+    <div class="card form-card">
+        <h3>Créer un utilisateur</h3>
+        <form method="POST">
+            <label for="username">Nom d'utilisateur</label>
+            <input id="username" name="username" type="text" required>
+
+            <label for="password">Mot de passe</label>
+            <input id="password" name="password" type="password" required>
+
+            <label for="role">Rôle</label>
+            <select id="role" name="role">
+                <option value="administrateur">Administrateur</option>
+                <option value="auditeur">Auditeur</option>
+                <option value="vendeur">Vendeur</option>
+            </select>
+
+            <label>Photo de l'utilisateur</label>
+            <div class="camera-box">
+                <video id="camera-preview" autoplay playsinline></video>
+                <canvas id="camera-canvas" hidden></canvas>
+                <img id="photo-preview" class="photo-preview" alt="Aperçu de la photo" hidden>
+                <input id="photo" name="photo" type="hidden">
+                <div class="camera-actions">
+                    <button type="button" class="secondary-btn" id="start-camera">Activer la caméra</button>
+                    <button type="button" class="primary-btn" id="capture-photo">Capturer la photo</button>
+                </div>
+                <small id="camera-message">Autorisez l'accès à la caméra pour prendre une photo.</small>
+            </div>
+
+            <button type="submit" class="primary-btn">Créer</button>
+        </form>
+    </div>
+
+    <div class="card panel">
+        <h3>Liste des utilisateurs</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Utilisateur</th>
+                    <th>Rôle</th>
+                    <th>Photo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.role }}</td>
+                    <td>{% if user.photo %}<img src="{{ user.photo }}" class="user-photo" alt="Photo de {{ user.username }}">{% else %}Avatar{% endif %}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3">Aucun utilisateur.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+const video = document.getElementById('camera-preview');
+const canvas = document.getElementById('camera-canvas');
+const photoInput = document.getElementById('photo');
+const photoPreview = document.getElementById('photo-preview');
+const message = document.getElementById('camera-message');
+let cameraStream;
+
+document.getElementById('start-camera').addEventListener('click', async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        message.textContent = 'La caméra n’est pas disponible dans ce navigateur.';
+        return;
+    }
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+        video.srcObject = cameraStream;
+        message.textContent = 'Caméra active. Cliquez sur Capturer la photo.';
+    } catch (error) {
+        message.textContent = 'Accès à la caméra refusé ou indisponible.';
+    }
+});
+
+document.getElementById('capture-photo').addEventListener('click', () => {
+    if (!video.srcObject) {
+        message.textContent = 'Activez d’abord la caméra.';
+        return;
+    }
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    const image = canvas.toDataURL('image/jpeg', 0.82);
+    photoInput.value = image;
+    photoPreview.src = image;
+    photoPreview.hidden = false;
+    message.textContent = 'Photo capturée et prête à être enregistrée.';
+});
+
+window.addEventListener('beforeunload', () => {
+    if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+});
+</script>
+{% endblock %}

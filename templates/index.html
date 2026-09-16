@@ -3,10 +3,114 @@
 {% block title %}Accueil - Billetterie{% endblock %}
 
 {% block contenu %}
-<section class="card" style="padding: 24px;">
-    <h2>Bienvenue</h2>
-    <p>Bienvenue dans l’application de gestion de billetterie du Stade Communal.</p>
-    <p>Connectez-vous pour gérer les événements, les catégories, les ventes, les billets et le contrôle d’entrée.</p>
-    <a href="{{ url_for('login') }}" class="primary-btn">Se connecter</a>
+<div class="landing-page-shell">
+<section class="hero-shell">
+    <div class="hero-content">
+        <span class="eyebrow glow-eyebrow">Premium live experiences</span>
+        <h1>La plateforme premium pour gérer vos événements à grande échelle.</h1>
+        <p>
+            StadeControl centralise la vente, la validation, la performance et le contrôle d’entrée de vos billets
+            dans un espace élégant pensé pour les événements d’exception.
+        </p>
+        <div class="hero-actions">
+            <a href="{{ url_for('login') }}" class="luxury-btn primary">Accéder au back-office</a>
+            <a href="#solutions" class="luxury-btn secondary">Découvrir les solutions</a>
+        </div>
+        <div class="hero-metrics">
+            <div>
+                <strong>+42%</strong>
+                <span>Conversions</span>
+            </div>
+            <div>
+                <strong>2.4k</strong>
+                <span>Billets vendus</span>
+            </div>
+            <div>
+                <strong>24/7</strong>
+                <span>Suivi temps réel</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="hero-panel">
+        <div class="panel-top">
+            <span class="status-pill">Live</span>
+            <span class="muted-label">Q4 Event Operations</span>
+        </div>
+
+        <div class="scoreboard">
+            <div class="score-box accent-gold">
+                <span>Revenu</span>
+                <strong>€ 48.9K</strong>
+            </div>
+            <div class="score-box accent-indigo">
+                <span>Remplissage</span>
+                <strong>86%</strong>
+            </div>
+        </div>
+
+        <div class="mini-list">
+            <div class="mini-item">
+                <div>
+                    <small>Festival Lumière</small>
+                    <strong>410 billets</strong>
+                </div>
+                <span class="small-trend positive">+18%</span>
+            </div>
+            <div class="mini-item">
+                <div>
+                    <small>Soirée Jazz</small>
+                    <strong>268 billets</strong>
+                </div>
+                <span class="small-trend positive">+12%</span>
+            </div>
+            <div class="mini-item">
+                <div>
+                    <small>Conférence Design</small>
+                    <strong>96% de présence</strong>
+                </div>
+                <span class="small-trend neutral">Stable</span>
+            </div>
+        </div>
+    </div>
 </section>
+
+<section class="feature-section" id="solutions">
+    <div class="section-heading">
+        <span class="eyebrow">Ce que vous contrôlez</span>
+        <h2>Une expérience de gestion événementielle pensée pour la performance.</h2>
+    </div>
+
+    <div class="feature-grid">
+        <article class="feature-card">
+            <div class="feature-icon">◎</div>
+            <h3>Événements</h3>
+            <p>Planifiez les dates, les lieux, les capacités et les offres de billets avec précision.</p>
+        </article>
+        <article class="feature-card">
+            <div class="feature-icon">◫</div>
+            <h3>Ventes</h3>
+            <p>Suivez les transactions, la performance par événement et l’évolution des revenus.</p>
+        </article>
+        <article class="feature-card">
+            <div class="feature-icon">◌</div>
+            <h3>Billets & QR</h3>
+            <p>Gérez la validation, les accès et les contrôles d’entrée de manière rapide et fiable.</p>
+        </article>
+    </div>
+</section>
+
+<section class="showcase-band">
+    <div class="showcase-box">
+        <span class="eyebrow">Management</span>
+        <h3>Un tableau de bord pensé pour les opérateurs et les décideurs.</h3>
+    </div>
+    <div class="showcase-points">
+        <div>• Analyse des ventes en temps réel</div>
+        <div>• Suivi des billets vérifiés</div>
+        <div>• Gestion multi-rôles</div>
+        <div>• Interface premium responsive</div>
+    </div>
+</section>
+</div>
 {% endblock %}

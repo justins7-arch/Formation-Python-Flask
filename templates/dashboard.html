@@ -3,29 +3,141 @@
 {% block title %}Tableau de bord{% endblock %}
 
 {% block contenu %}
-<section class="dashboard">
+<section class="dashboard premium-dashboard">
+    <div class="dashboard-topbar">
+        <div>
+            <p class="eyebrow">{{ _('Performance globale') }}</p>
+            <h2>{{ _('Bienvenue') }}, {{ session.get('username') }}</h2>
+        </div>
+        {% if session.get('user_role') in ['administrateur', 'vendeur'] %}
+        <a href="{{ url_for('ventes') }}" class="primary-btn">{{ _('Nouvelle vente') }}</a>
+        {% endif %}
+    </div>
+
     <div class="stats-grid">
         <div class="stat-card accent-blue">
-            <span>Événements</span>
-            <strong>{{ total_evenements }}</strong>
+            <div class="stat-icon">◎</div>
+            <div>
+                <span>{{ _('Événements') }}</span>
+                <strong>{{ total_evenements }}</strong>
+            </div>
         </div>
         <div class="stat-card accent-green">
-            <span>Ventes</span>
-            <strong>{{ total_ventes }}</strong>
+            <div class="stat-icon">◫</div>
+            <div>
+                <span>{{ _('Ventes') }}</span>
+                <strong>{{ total_ventes }}</strong>
+            </div>
         </div>
         <div class="stat-card accent-purple">
-            <span>Billets</span>
-            <strong>{{ total_billets }}</strong>
+            <div class="stat-icon">◌</div>
+            <div>
+                <span>{{ _('Billets') }}</span>
+                <strong>{{ total_billets }}</strong>
+            </div>
         </div>
         <div class="stat-card accent-orange">
-            <span>Entrées validées</span>
-            <strong>{{ billets_valides }}</strong>
+            <div class="stat-icon">€</div>
+            <div>
+                <span>{{ _('Revenu total') }}</span>
+                <strong>{{ money(total_revenu) }}</strong>
+            </div>
         </div>
     </div>
 
-    <div class="panel">
+    <div class="widget-grid">
+        <div class="mini-widget">
+            <span>{{ _('Événements à venir') }}</span>
+            <strong>{{ upcoming_events }}</strong>
+            <small>{{ _('Programmation active') }}</small>
+        </div>
+        <div class="mini-widget">
+            <span>{{ _('Prix moyen billet') }}</span>
+            <strong>{{ money(avg_ticket_price) }}</strong>
+            <small>{{ _('Par vente') }}</small>
+        </div>
+        <div class="mini-widget">
+            <span>{{ _('Taux de remplissage') }}</span>
+            <strong>{{ occupancy }}%</strong>
+            <small>{{ _('Capacité moyenne') }}</small>
+        </div>
+        <div class="mini-widget">
+            <span>{{ _('Billets validés') }}</span>
+            <strong>{{ checked_rate }}%</strong>
+            <small>{{ _('Contrôle d’entrée') }}</small>
+        </div>
+    </div>
+
+    <div class="chart-grid">
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Ventes</p>
+                    <h3>Billets vendus par événement</h3>
+                </div>
+            </div>
+            <div class="canvas-wrap">
+                <canvas id="eventChart"></canvas>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Contrôle</p>
+                    <h3>Statut des billets</h3>
+                </div>
+            </div>
+            <div class="canvas-wrap donut-wrap">
+                <canvas id="ticketStatusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-grid lower-grid">
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Performance</p>
+                    <h3>Revenus par catégorie</h3>
+                </div>
+            </div>
+            <div class="canvas-wrap">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Remplissage</p>
+                    <h3>Utilisation des capacités</h3>
+                </div>
+            </div>
+            <div class="load-list">
+                {% for item in event_load %}
+                <div class="load-item">
+                    <div class="load-meta">
+                        <span>{{ item.nom }}</span>
+                        <strong>{{ item.vendus }}/{{ item.capacite }}</strong>
+                    </div>
+                    <div class="progress-bar">
+                        <span style="width: {{ item.taux }}%"></span>
+                    </div>
+                </div>
+                {% else %}
+                <p>Aucun événement pour le moment.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="panel recent-panel">
         <div class="panel-header">
-            <h3>Ventes récentes</h3>
+            <div>
+                <p class="eyebrow">{{ _('Transactions') }}</p>
+                <h3>{{ _('Ventes récentes') }}</h3>
+            </div>
         </div>
         <table>
             <thead>
@@ -41,7 +153,7 @@
                 <tr>
                     <td>{{ vente.acheteur }}</td>
                     <td>{{ vente.email }}</td>
-                    <td>{{ vente.total }} €</td>
+                    <td>{{ money(vente.total, vente.evenement) }}</td>
                     <td>{{ vente.created_at.strftime('%d/%m/%Y') }}</td>
                 </tr>
                 {% else %}
@@ -52,5 +164,115 @@
             </tbody>
         </table>
     </div>
+
+    <div class="two-column-layout">
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">{{ _('Activité') }}</p>
+                    <h3>{{ _('Derniers billets générés') }}</h3>
+                </div>
+            </div>
+            <div class="activity-list">
+                {% for ticket in recent_activity %}
+                <div class="activity-item">
+                    <div class="activity-dot"></div>
+                    <div>
+                        <strong>{{ ticket.reference }}</strong>
+                        <small>{{ ticket.acheteur }} · {{ ticket.email }}</small>
+                    </div>
+                    <span>{{ money(ticket.prix, ticket.evenement) }}</span>
+                </div>
+                {% else %}
+                <p>Aucun billet pour le moment.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">{{ _('Performance') }}</p>
+                    <h3>{{ _('Points clés') }}</h3>
+                </div>
+            </div>
+            <div class="insight-list">
+                <div class="insight-item">
+                    <span>Événement le plus vendu</span>
+                    <strong>{{ event_labels[0] if event_labels else 'Aucun' }}</strong>
+                </div>
+                <div class="insight-item">
+                    <span>Revenu catégorie max</span>
+                    <strong>{{ category_labels[0] if category_labels else 'Aucune' }}</strong>
+                </div>
+                <div class="insight-item">
+                    <span>Vérification d’entrée</span>
+                    <strong>{{ checked_rate }}%</strong>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const eventCtx = document.getElementById('eventChart');
+new Chart(eventCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ event_labels | tojson }},
+        datasets: [{
+            label: 'Billets vendus',
+            data: {{ event_values | tojson }},
+            backgroundColor: ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'],
+            borderRadius: 10
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+
+const statusCtx = document.getElementById('ticketStatusChart');
+new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ status_billets.keys() | list | tojson }},
+        datasets: [{
+            data: {{ status_billets.values() | list | tojson }},
+            backgroundColor: ['#10b981', '#fbbf24']
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } }
+    }
+});
+
+const categoryCtx = document.getElementById('categoryChart');
+new Chart(categoryCtx, {
+    type: 'line',
+    data: {
+        labels: {{ category_labels | tojson }},
+        datasets: [{
+            label: 'Revenu (€)',
+            data: {{ category_values | tojson }},
+            borderColor: '#4f46e5',
+            backgroundColor: 'rgba(79, 70, 229, 0.15)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+</script>
 {% endblock %}

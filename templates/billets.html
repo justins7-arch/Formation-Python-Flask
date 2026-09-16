@@ -4,7 +4,7 @@
 
 {% block contenu %}
 <section class="content-header">
-    <h2>Billets vendus</h2>
+    <h2>{{ _('Billets vendus') }}</h2>
 </section>
 
 <div class="panel">
@@ -25,7 +25,7 @@
                 <td>{{ ticket.reference }}</td>
                 <td>{{ ticket.acheteur }}</td>
                 <td>{{ ticket.categorie.nom }}</td>
-                <td>{{ ticket.prix }} €</td>
+                <td>{{ money(ticket.prix, ticket.evenement) }}</td>
                 <td>
                     {% if ticket.checked_in %}
                         <span class="status success">Validé</span>

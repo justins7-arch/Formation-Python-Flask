@@ -4,14 +4,14 @@
 
 {% block contenu %}
 <section class="content-header">
-    <h2>Contrôle d’entrée</h2>
+    <h2>{{ _('Contrôle d’entrée') }}</h2>
 </section>
 
 <div class="card form-card">
     <form method="POST">
         <label for="reference">Référence du billet</label>
         <input id="reference" name="reference" type="text" placeholder="Ex. TCK-ABC12345" required>
-        <button type="submit" class="primary-btn">Valider l’entrée</button>
+        <button type="submit" class="primary-btn">{{ _('Valider l’entrée') }}</button>
     </form>
 
     {% if message %}

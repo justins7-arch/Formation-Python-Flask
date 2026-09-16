@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Rapports de ventes') }}{% endblock %}
+
+{% block contenu %}
+<section class="report-page">
+    <div class="content-header">
+        <div>
+            <p class="eyebrow">StadeControl · Stade Communal</p>
+            <h2>{{ _('Rapports de ventes') }}</h2>
+        </div>
+        <div class="report-downloads">
+            <a class="export-btn export-pdf" href="{{ url_for('export_pdf', period=report.period, date=report.selected, month=report.selected) }}" download>
+                <span>PDF</span> {{ _('Télécharger PDF') }}
+            </a>
+            <a class="export-btn export-excel" href="{{ url_for('export_excel', period=report.period, date=report.selected, month=report.selected) }}" download>
+                <span>XLSX</span> {{ _('Télécharger Excel') }}
+            </a>
+        </div>
+    </div>
+
+    <div class="panel report-filter-panel">
+        <form method="GET" class="report-filter-form">
+            <div>
+                <label for="period">Type de rapport</label>
+                <select id="period" name="period" onchange="toggleReportDate(this.value)">
+                    <option value="day" {% if report.period == 'day' %}selected{% endif %}>{{ _('Rapport journalier') }}</option>
+                    <option value="month" {% if report.period == 'month' %}selected{% endif %}>{{ _('Rapport mensuel') }}</option>
+                </select>
+            </div>
+            <div id="day-field" {% if report.period != 'day' %}hidden{% endif %}>
+                <label for="date">Date</label>
+                <input id="date" type="date" name="date" value="{{ report.selected if report.period == 'day' else '' }}">
+            </div>
+            <div id="month-field" {% if report.period != 'month' %}hidden{% endif %}>
+                <label for="month">Mois</label>
+                <input id="month" type="month" name="month" value="{{ report.selected if report.period == 'month' else '' }}">
+            </div>
+            <button class="primary-btn" type="submit">{{ _('Filtrer') }}</button>
+        </form>
+    </div>
+
+    <div class="report-summary-grid">
+        <div class="mini-widget">
+            <span>{{ _('Chiffre d’affaires') }}</span>
+            <strong>{{ money(report.total_revenue) }}</strong>
+            <small>{{ report.label }}</small>
+        </div>
+        <div class="mini-widget">
+            <span>{{ _('Nombre de ventes') }}</span>
+            <strong>{{ report.sales|length }}</strong>
+            <small>{{ report.label }}</small>
+        </div>
+        <div class="mini-widget">
+            <span>{{ _('Billets vendus') }}</span>
+            <strong>{{ report.total_tickets }}</strong>
+            <small>{{ report.label }}</small>
+        </div>
+    </div>
+
+    <div class="panel recent-panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">{{ report.label }}</p>
+                <h3>{{ _('Ventes récentes') }}</h3>
+            </div>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Client</th>
+                        <th>Email</th>
+                        <th>Événement</th>
+                        <th>Billets</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in report.sales %}
+                    <tr>
+                        <td>{{ sale.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>{{ sale.acheteur }}</td>
+                        <td>{{ sale.email }}</td>
+                        <td>{{ sale.evenement.nom }}</td>
+                        <td>{{ sale.tickets|length }}</td>
+                        <td>{{ money(sale.total, sale.evenement) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6">Aucune vente sur cette période.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<script>
+function toggleReportDate(period) {
+    document.getElementById('day-field').hidden = period !== 'day';
+    document.getElementById('month-field').hidden = period !== 'month';
+}
+</script>
+{% endblock %}

@@ -4,8 +4,8 @@
 
 {% block contenu %}
 <section class="content-header">
-    <h2>Catégories et prix</h2>
-    <a href="{{ url_for('ajouter_categorie') }}" class="primary-btn">Ajouter une catégorie</a>
+    <h2>{{ _('Catégories et prix') }}</h2>
+    <a href="{{ url_for('ajouter_categorie') }}" class="primary-btn">{{ _('Ajouter une catégorie') }}</a>
 </section>
 
 <form class="filter-form" method="GET">
@@ -23,7 +23,7 @@
     <article class="card">
         <h3>{{ categorie.nom }}</h3>
         <p><strong>Événement :</strong> {{ categorie.evenement.nom }}</p>
-        <p><strong>Prix :</strong> {{ categorie.prix }} €</p>
+        <p><strong>Prix :</strong> {{ money(categorie.prix, categorie.evenement) }}</p>
         <p><strong>Quantité :</strong> {{ categorie.quantite }}</p>
     </article>
     {% else %}

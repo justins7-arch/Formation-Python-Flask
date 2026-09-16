@@ -1,24 +1,45 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ current_language }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Billetterie{% endblock %}</title>
+    <title>{% block title %}StadeControl{% endblock %}</title>
+    <meta name="description" content="StadeControl, application professionnelle de gestion de billetterie du Stade Communal." />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <header class="site-header">
         <div class="container nav-wrap">
-            <div class="brand">TicketFlow</div>
+            <a href="{{ url_for('index') if not session.get('user_id') else url_for('dashboard') }}" class="brand" aria-label="StadeControl home">
+                <img src="{{ url_for('static', filename='img/stade-communal-logo.svg') }}" alt="Logo Stade Communal" class="brand-logo">
+                <span class="brand-text">StadeControl</span>
+            </a>
             {% if session.get('user_id') %}
             <nav class="main-nav">
-                <a href="{{ url_for('dashboard') }}">Tableau de bord</a>
-                <a href="{{ url_for('evenements') }}">Événements</a>
-                <a href="{{ url_for('categories') }}">Catégories</a>
-                <a href="{{ url_for('ventes') }}">Ventes</a>
-                <a href="{{ url_for('billets') }}">Billets</a>
-                <a href="{{ url_for('controle_entree') }}">Contrôle</a>
-                <a href="{{ url_for('logout') }}">Déconnexion</a>
+                <a href="{{ url_for('dashboard') }}">{{ _('dashboard') }}</a>
+                {% if session.get('user_role') in ['administrateur', 'auditeur'] %}
+                <a href="{{ url_for('evenements') }}">{{ _('events') }}</a>
+                {% endif %}
+                {% if session.get('user_role') == 'administrateur' %}
+                <a href="{{ url_for('categories') }}">{{ _('categories') }}</a>
+                <a href="{{ url_for('users') }}">{{ _('users') }}</a>
+                {% endif %}
+                {% if session.get('user_role') in ['administrateur', 'vendeur'] %}
+                <a href="{{ url_for('ventes') }}">{{ _('sales') }}</a>
+                {% endif %}
+                <a href="{{ url_for('billets') }}">{{ _('tickets') }}</a>
+                {% if session.get('user_role') in ['administrateur', 'auditeur'] %}
+                <a href="{{ url_for('controle_entree') }}">{{ _('control') }}</a>
+                <a href="{{ url_for('rapports') }}">{{ _('reports') }}</a>
+                {% endif %}
+                <a href="{{ url_for('account') }}" class="account-link">{{ _('account') }} : {{ session.get('username') }}</a>
+                <a href="{{ url_for('a_propos') }}">À propos</a>
+                <a href="{{ url_for('logout') }}">{{ _('logout') }}</a>
+            </nav>
+            {% else %}
+            <nav class="main-nav guest-nav">
+                <a href="{{ url_for('a_propos') }}">À propos</a>
+                <a href="{{ url_for('login') }}">{{ _('login') }}</a>
             </nav>
             {% endif %}
         </div>
@@ -37,5 +58,12 @@
 
         {% block contenu %}{% endblock %}
     </main>
+    <footer class="site-footer">
+        <div class="container footer-content">
+            <span>© 2026 StadeControl</span>
+            <span>Tous droits réservés.</span>
+            <span>V3.0.2</span>
+        </div>
+    </footer>
 </body>
 </html>

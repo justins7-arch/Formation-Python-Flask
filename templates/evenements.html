@@ -3,8 +3,8 @@
 {% block title %}Événements{% endblock %}
 
 {% block contenu %}
-<h2>Liste des événements</h2>
-<a href="{{ url_for('ajouter_evenement') }}">Ajouter un événement</a>
+<h2>{{ _('Liste des événements') }}</h2>
+<a href="{{ url_for('ajouter_evenement') }}">{{ _('Ajouter un événement') }}</a>
 
 {% for evenement in evenements %}
 <article>

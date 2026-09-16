@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}À propos - StadeControl{% endblock %}
+
+{% block contenu %}
+<section class="about-page">
+    <div class="about-hero">
+        <img src="{{ url_for('static', filename='img/stade-communal-logo.svg') }}" alt="Logo Stade Communal" class="about-logo">
+        <div>
+            <p class="eyebrow">Stade Communal · Version 3.0.2</p>
+            <h1>StadeControl</h1>
+            <p class="about-lead">StadeControl est une application professionnelle de gestion de billetterie du Stade Communal.</p>
+        </div>
+    </div>
+
+    <div class="about-content">
+        <p>
+            StadeControl centralise l'ensemble du cycle de gestion : création des événements, vente des billets,
+            contrôle des entrées, gestion des utilisateurs et rapports d'activité.
+        </p>
+        <p>
+            La plateforme a été pensée pour offrir aux équipes du Stade Communal une expérience fiable,
+            claire et efficace, depuis la préparation d'un événement jusqu'au suivi de ses performances.
+        </p>
+    </div>
+
+    <div class="about-meta">
+        <div><span>Développé par</span><strong>Justin SAÏDI</strong></div>
+        <div><span>Version</span><strong>3.0.2</strong></div>
+        <div><span>Édition</span><strong>Stade Communal</strong></div>
+    </div>
+</section>
+{% endblock %}

@@ -4,13 +4,13 @@
 
 {% block contenu %}
 <section class="content-header">
-    <h2>Vente de billets</h2>
+    <h2>{{ _('Vente de billets') }}</h2>
 </section>
 
 <form method="GET" class="filter-form">
     <label for="evenement_id">Événement</label>
     <select id="evenement_id" name="evenement_id" onchange="this.form.submit()">
-        <option value="">Sélectionner</option>
+        <option value="">{{ _('Sélectionner') }}</option>
         {% for event in evenements %}
         <option value="{{ event.id }}" {% if selected_event_id == event.id %}selected{% endif %}>{{ event.nom }}</option>
         {% endfor %}
@@ -29,7 +29,7 @@
         <label for="categorie_id">Catégorie</label>
         <select id="categorie_id" name="categorie_id" required>
             {% for categorie in categories %}
-            <option value="{{ categorie.id }}">{{ categorie.nom }} - {{ categorie.prix }} €</option>
+            <option value="{{ categorie.id }}">{{ categorie.nom }} - {{ money(categorie.prix, categorie.evenement) }}</option>
             {% endfor %}
         </select>
 
@@ -42,7 +42,7 @@
         <label for="quantite">Quantité</label>
         <input id="quantite" name="quantite" type="number" min="1" required>
 
-        <button type="submit" class="primary-btn">Valider la vente</button>
+        <button type="submit" class="primary-btn">{{ _('Valider la vente') }}</button>
     </form>
 </div>
 {% endblock %}
