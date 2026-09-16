@@ -1679,6 +1679,21 @@ select {
     border-top: 1px solid var(--border);
     color: var(--muted);
     font-size: 0.95rem;
+    text-align: center;
+}
+
+.auth-info p {
+    margin: 6px 0;
+}
+
+.auth-developer {
+    margin-top: 18px !important;
+    color: rgba(239, 248, 238, 0.58);
+    font-size: 0.8rem;
+}
+
+.auth-developer strong {
+    color: #58b982;
 }
 
 .account-link {
