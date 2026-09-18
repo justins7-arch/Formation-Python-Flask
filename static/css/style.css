@@ -22,11 +22,17 @@
 
 body {
     margin: 0;
+    overflow-x: hidden;
     background:
         radial-gradient(circle at top left, rgba(212, 175, 117, 0.18), transparent 28%),
         linear-gradient(135deg, #f9f5f1 0%, #f3eee9 32%, #f8f3ee 100%);
     color: var(--text);
     font-family: "Segoe UI", Arial, sans-serif;
+}
+
+img {
+    max-width: 100%;
+    display: block;
 }
 
 .container {
@@ -939,6 +945,130 @@ body {
     margin: 0;
     max-width: 700px;
     font-size: clamp(1.8rem, 3vw, 2.6rem);
+}
+
+.carousel-section {
+    margin-top: 24px;
+}
+
+.carousel {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 26px;
+    box-shadow: 0 20px 40px rgba(9, 21, 18, 0.22);
+    overflow: hidden;
+}
+
+.carousel-track {
+    position: relative;
+    min-height: 280px;
+}
+
+.carousel-slide {
+    display: none;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 20px;
+    padding: 30px 26px;
+    align-items: center;
+}
+
+.carousel-slide.active {
+    display: grid;
+}
+
+.slide-copy {
+    display: grid;
+    gap: 12px;
+}
+
+.slide-copy h3 {
+    margin: 0;
+    font-size: clamp(1.6rem, 2vw, 2.5rem);
+    line-height: 1.2;
+    color: #f6faf7;
+}
+
+.slide-copy p {
+    margin: 0;
+    max-width: 560px;
+    color: rgba(239, 244, 238, 0.8);
+    line-height: 1.7;
+}
+
+.slide-visual {
+    display: grid;
+    place-items: center;
+}
+
+.visual-card {
+    width: min(100%, 260px);
+    padding: 26px 22px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(17, 138, 93, 0.22), rgba(28, 46, 69, 0.28));
+    border: 1px solid rgba(255,255,255,0.12);
+    display: grid;
+    gap: 6px;
+    color: #f3f9f3;
+}
+
+.visual-card.dark {
+    background: linear-gradient(135deg, rgba(28, 31, 34, 0.8), rgba(18, 70, 95, 0.8));
+}
+
+.visual-card.accent {
+    background: linear-gradient(135deg, rgba(146, 55, 71, 0.75), rgba(99, 119, 188, 0.48));
+}
+
+.visual-card span,
+.visual-card small {
+    color: rgba(255,255,255,0.75);
+}
+
+.visual-card strong {
+    font-size: clamp(1.8rem, 2vw, 2.6rem);
+    line-height: 1;
+}
+
+.carousel-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 26px 20px;
+}
+
+.carousel-btn {
+    width: 42px;
+    height: 42px;
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    color: #f4f8f6;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.carousel-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.dot {
+    width: 11px;
+    height: 11px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.35);
+    cursor: pointer;
+    padding: 0;
+}
+
+.dot.active {
+    background: #67d08d;
+    box-shadow: 0 0 0 5px rgba(103,208,141,0.17);
 }
 
 .feature-grid {
@@ -1916,6 +2046,14 @@ select {
 }
 
 @media (max-width: 768px) {
+    .container {
+        width: min(100% - 20px, 1200px);
+    }
+
+    body {
+        font-size: 15px;
+    }
+
     .nav-wrap,
     .content-header,
     .dashboard-topbar,
@@ -1931,20 +2069,26 @@ select {
     .two-column-layout,
     .feature-grid,
     .widget-grid,
-    .showcase-band {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .hero-shell {
-        grid-template-columns: 1fr;
-    }
-
+    .showcase-band,
     .report-filter-form,
     .report-summary-grid,
     .management-grid,
     .configuration-grid,
     .backup-grid {
         grid-template-columns: 1fr 1fr;
+    }
+
+    .hero-shell,
+    .carousel-slide {
+        grid-template-columns: 1fr;
+    }
+
+    .carousel-slide {
+        padding: 22px 18px;
+    }
+
+    .slide-copy h3 {
+        font-size: 1.9rem;
     }
 
     .app-layout {
@@ -2013,6 +2157,26 @@ select {
     .top-logout {
         margin-left: 0;
     }
+
+    .auth-card,
+    .form-card,
+    .account-card,
+    .panel,
+    .card {
+        padding: 18px;
+    }
+
+    .dashboard-topbar {
+        align-items: flex-start;
+    }
+
+    .dashboard-topbar h2 {
+        font-size: 1.5rem;
+    }
+
+    .main-content {
+        padding-top: 18px;
+    }
 }
 
 @media (max-width: 520px) {
@@ -2022,10 +2186,7 @@ select {
     .feature-grid,
     .widget-grid,
     .showcase-band,
-    .scoreboard {
-        grid-template-columns: 1fr;
-    }
-
+    .scoreboard,
     .report-filter-form,
     .report-summary-grid,
     .management-grid,
@@ -2043,6 +2204,14 @@ select {
         font-size: 1.2rem;
     }
 
+    .brand-text {
+        font-size: 1.05rem;
+    }
+
+    .brand-text small {
+        letter-spacing: 0.09em;
+    }
+
     .about-hero {
         align-items: flex-start;
         flex-direction: column;
@@ -2056,5 +2225,23 @@ select {
     .footer-content {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .hero-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .luxury-btn {
+        width: 100%;
+    }
+
+    .carousel-controls {
+        padding: 0 18px 16px;
+    }
+
+    .carousel-btn {
+        width: 38px;
+        height: 38px;
     }
 }

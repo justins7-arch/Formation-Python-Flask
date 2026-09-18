@@ -75,6 +75,67 @@
     </div>
 </section>
 
+<section class="carousel-section" aria-label="Présentation des fonctionnalités">
+    <div class="carousel">
+        <div class="carousel-track">
+            <article class="carousel-slide active">
+                <div class="slide-copy">
+                    <span class="eyebrow">Gestion centralisée</span>
+                    <h3>Planifiez, suivez et piliez chaque événement sans friction.</h3>
+                    <p>Les équipes du stade peuvent organiser les événements, gérer les catégories de billets et suivre les performances en temps réel.</p>
+                </div>
+                <div class="slide-visual">
+                    <div class="visual-card">
+                        <span>Ventes du jour</span>
+                        <strong>1 284</strong>
+                        <small>Billets enregistrés</small>
+                    </div>
+                </div>
+            </article>
+
+            <article class="carousel-slide">
+                <div class="slide-copy">
+                    <span class="eyebrow">Contrôle d’entrée</span>
+                    <h3>Validation rapide des billets grâce au QR code et au suivi d’accès.</h3>
+                    <p>Le contrôle est simplifié pour les agents, avec validation immédiate et historique des entrées.</p>
+                </div>
+                <div class="slide-visual">
+                    <div class="visual-card dark">
+                        <span>Entrées validées</span>
+                        <strong>96%</strong>
+                        <small>Flux du soir</small>
+                    </div>
+                </div>
+            </article>
+
+            <article class="carousel-slide">
+                <div class="slide-copy">
+                    <span class="eyebrow">Rapports intelligents</span>
+                    <h3>Des exportations PDF et Excel prêtes pour la revue d’activité.</h3>
+                    <p>Suivez les revenus, les tendances et les performances par vendeur ou par événement et partagez les résultats rapidement.</p>
+                </div>
+                <div class="slide-visual">
+                    <div class="visual-card accent">
+                        <span>Revenus</span>
+                        <strong>€ 48.9K</strong>
+                        <small>Cette semaine</small>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <div class="carousel-controls">
+            <button class="carousel-btn prev" type="button" aria-label="Afficher le slide précédent">◀</button>
+            <div class="carousel-dots" aria-label="Navigation du carrousel">
+                <button class="dot active" type="button" aria-label="Aller au slide 1"></button>
+                <button class="dot" type="button" aria-label="Aller au slide 2"></button>
+                <button class="dot" type="button" aria-label="Aller au slide 3"></button>
+            </div>
+            <button class="carousel-btn next" type="button" aria-label="Afficher le slide suivant">▶</button>
+        </div>
+    </div>
+</section>
+
 <section class="feature-section" id="solutions">
     <div class="section-heading">
         <span class="eyebrow">Ce que vous contrôlez</span>
@@ -113,4 +174,45 @@
     </div>
 </section>
 </div>
+
+<script>
+const slides = Array.from(document.querySelectorAll('.carousel-slide'));
+const dots = Array.from(document.querySelectorAll('.dot'));
+const prevBtn = document.querySelector('.carousel-btn.prev');
+const nextBtn = document.querySelector('.carousel-btn.next');
+let activeIndex = 0;
+let autoRotate = null;
+
+function showSlide(index) {
+    activeIndex = (index + slides.length) % slides.length;
+    slides.forEach((slide, i) => slide.classList.toggle('active', i === activeIndex));
+    dots.forEach((dot, i) => dot.classList.toggle('active', i === activeIndex));
+}
+
+function startAutoRotate() {
+    autoRotate = window.setInterval(() => showSlide(activeIndex + 1), 4200);
+}
+
+prevBtn.addEventListener('click', () => {
+    window.clearInterval(autoRotate);
+    showSlide(activeIndex - 1);
+    startAutoRotate();
+});
+
+nextBtn.addEventListener('click', () => {
+    window.clearInterval(autoRotate);
+    showSlide(activeIndex + 1);
+    startAutoRotate();
+});
+
+dots.forEach((dot, index) => {
+    dot.addEventListener('click', () => {
+        window.clearInterval(autoRotate);
+        showSlide(index);
+        startAutoRotate();
+    });
+});
+
+startAutoRotate();
+</script>
 {% endblock %}
