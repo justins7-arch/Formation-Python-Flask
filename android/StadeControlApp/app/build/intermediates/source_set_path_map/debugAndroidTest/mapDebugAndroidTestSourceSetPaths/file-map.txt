@@ -1,0 +1,5 @@
+com.stadecontrol.app.test.app-androidTest-0 /Users/macbookpro/Desktop/Masterclass_Flask/android/StadeControlApp/app/build/generated/res/resValues/androidTest/debug
+com.stadecontrol.app.test.app-updated_navigation_xml-1 /Users/macbookpro/Desktop/Masterclass_Flask/android/StadeControlApp/app/build/generated/updated_navigation_xml/debugAndroidTest
+com.stadecontrol.app.test.app-mergeDebugAndroidTestResources-2 /Users/macbookpro/Desktop/Masterclass_Flask/android/StadeControlApp/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/merged.dir
+com.stadecontrol.app.test.app-mergeDebugAndroidTestResources-3 /Users/macbookpro/Desktop/Masterclass_Flask/android/StadeControlApp/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/stripped.dir
+com.stadecontrol.app.test.app-debugAndroidTest-4 /Users/macbookpro/Desktop/Masterclass_Flask/android/StadeControlApp/app/build/intermediates/merged_res/debugAndroidTest/mergeDebugAndroidTestResources
