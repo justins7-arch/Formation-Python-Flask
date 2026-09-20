@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Modifier une catégorie{% endblock %}
+
+{% block contenu %}
+<section class="form-section">
+    <div class="card form-card">
+        <p class="eyebrow">StadeControl · Tarification</p>
+        <h2>Modifier une catégorie</h2>
+        <p class="page-subtitle">{{ categorie.evenement.nom }}</p>
+        <form method="POST">
+            <label for="nom">{{ _('Nom de la catégorie') }}</label>
+            <input id="nom" name="nom" type="text" value="{{ categorie.nom }}" required>
+
+            <label for="prix">{{ _('Prix') }}</label>
+            <input id="prix" name="prix" type="number" min="0" step="0.01" value="{{ categorie.prix }}" required>
+
+            <label for="quantite">{{ _('Quantité disponible') }}</label>
+            <input id="quantite" name="quantite" type="number" min="1" value="{{ categorie.quantite }}" required>
+
+            <div class="form-actions">
+                <button type="submit" class="primary-btn">Enregistrer les modifications</button>
+                <a href="{{ url_for('categories', evenement_id=categorie.evenement_id) }}" class="secondary-btn">Annuler</a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

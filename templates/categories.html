@@ -26,25 +26,68 @@
         <span class="filter-result">{{ categories|length }} catégorie(s)</span>
     </form>
 
-    <div class="management-grid category-management-grid">
-    {% for row in categories %}
-    <article class="management-card category-management-card">
-        <div class="category-icon">▦</div>
-        <div class="category-card-heading">
-            <div><h3>{{ row.categorie.nom }}</h3><span>{{ row.categorie.evenement.nom }}</span></div>
-            <strong class="category-price">{{ money(row.categorie.prix, row.categorie.evenement) }}</strong>
-        </div>
-        <div class="category-stock">
-            <div><span>Disponibles</span><strong>{{ row.restants }}</strong></div>
-            <div><span>Vendus</span><strong>{{ row.vendus }}</strong></div>
-            <div><span>Total</span><strong>{{ row.categorie.quantite }}</strong></div>
-        </div>
-        <div class="load-meta"><span>Stock utilisé</span><strong>{{ ((row.vendus / row.categorie.quantite) * 100)|round|int if row.categorie.quantite else 0 }}%</strong></div>
-        <div class="progress-bar"><span style="width: {{ ((row.vendus / row.categorie.quantite) * 100)|round|int if row.categorie.quantite else 0 }}%"></span></div>
-    </article>
-    {% else %}
-    <div class="empty-state"><strong>Aucune catégorie enregistrée.</strong><span>Ajoutez une catégorie pour commencer votre tarification.</span></div>
-    {% endfor %}
+    <div class="panel table-scroll">
+        <table class="management-table">
+            <thead>
+                <tr>
+                    <th>Catégorie</th><th>Événement</th><th>Prix</th><th>Disponibles</th>
+                    <th>Vendus</th><th>Total</th><th>Remplissage</th><th>Statut</th><th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for row in categories %}
+                <tr>
+                    <td><strong>{{ row.categorie.nom }}</strong></td>
+                    <td>{{ row.categorie.evenement.nom }}</td>
+                    <td class="category-price">{{ money(row.categorie.prix, row.categorie.evenement) }}</td>
+                    <td>{{ row.restants }}</td><td>{{ row.vendus }}</td><td>{{ row.categorie.quantite }}</td>
+                    <td>
+                        <strong>{{ ((row.vendus / row.categorie.quantite) * 100)|round|int if row.categorie.quantite else 0 }}%</strong>
+                        <div class="progress-bar"><span style="width: {{ ((row.vendus / row.categorie.quantite) * 100)|round|int if row.categorie.quantite else 0 }}%"></span></div>
+                    </td>
+                    <td>{% if row.categorie.annulee %}<span class="status neutral">Annulée</span>{% else %}<span class="status success">Active</span>{% endif %}</td>
+                    <td class="table-actions">
+                        {% if not row.categorie.annulee %}
+                        <a href="{{ url_for('modifier_categorie', categorie_id=row.categorie.id) }}" class="table-action-btn">Modifier</a>
+                        <form method="POST" action="{{ url_for('annuler_categorie', categorie_id=row.categorie.id) }}" class="inline-form" onsubmit="return confirm('Annuler cette catégorie ? Elle restera dans l’historique.');">
+                            <button type="submit" class="danger-action-btn">Annuler</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="9">Aucune catégorie enregistrée.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
+
+    <section class="panel operations-history-panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Traçabilité</p>
+                <h3>Historique des opérations catégories</h3>
+            </div>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr><th>Date</th><th>Action</th><th>Opération</th><th>Utilisateur</th></tr>
+                </thead>
+                <tbody>
+                    {% for operation in operations %}
+                    <tr>
+                        <td>{{ operation.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td><span class="status {{ 'neutral' if operation.action == 'annulation' else 'success' }}">{{ operation.action|capitalize }}</span></td>
+                        <td>{{ operation.description }}</td>
+                        <td>{{ operation.utilisateur }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4">Aucune opération enregistrée.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
 </section>
 {% endblock %}

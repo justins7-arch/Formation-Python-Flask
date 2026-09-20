@@ -13,30 +13,26 @@
         <a href="{{ url_for('ajouter_evenement') }}" class="primary-btn">{{ _('Ajouter un événement') }}</a>
     </div>
 
-    <div class="management-grid event-management-grid">
-    {% for row in evenements %}
-    <article class="management-card event-management-card">
-        <div class="management-card-top">
-            <span class="date-chip">{{ row.evenement.date }}</span>
-            <span class="event-status {% if row.taux >= 90 %}status-hot{% else %}status-open{% endif %}">
-                {% if row.taux >= 90 %}Presque complet{% else %}Ouvert{% endif %}
-            </span>
-        </div>
-        <h3>{{ row.evenement.nom }}</h3>
-        <p class="event-location">⌖ {{ row.evenement.lieu }}</p>
-        {% if row.evenement.description %}<p class="event-description">{{ row.evenement.description }}</p>{% endif %}
-        <div class="event-stat-columns">
-            <div><span>Billets vendus</span><strong>{{ row.vendus }}</strong></div>
-            <div><span>Capacité</span><strong>{{ row.evenement.capacite }}</strong></div>
-            <div><span>Catégories</span><strong>{{ row.categories }}</strong></div>
-        </div>
-        <div class="load-meta"><span>Remplissage</span><strong>{{ row.taux }}%</strong></div>
-        <div class="progress-bar"><span style="width: {{ row.taux }}%"></span></div>
-    </article>
-{% else %}
-    <div class="empty-state"><strong>Aucun événement enregistré.</strong><span>Commencez par créer votre premier événement.</span></div>
-{% endfor %}
-</div>
+    <div class="panel table-scroll">
+        <table class="management-table">
+            <thead>
+                <tr><th>Événement</th><th>Début</th><th>Fin</th><th>Lieu</th><th>Billets vendus</th><th>Capacité</th><th>Catégories</th><th>Remplissage</th><th>Statut</th></tr>
+            </thead>
+            <tbody>
+            {% for row in evenements %}
+                <tr>
+                    <td><strong>{{ row.evenement.nom }}</strong>{% if row.evenement.description %}<small class="table-secondary-text">{{ row.evenement.description }}</small>{% endif %}</td>
+                    <td>{{ row.evenement.date }}</td><td>{{ row.evenement.date_fin or row.evenement.date }}</td><td>{{ row.evenement.lieu }}</td>
+                    <td>{{ row.vendus }}</td><td>{{ row.evenement.capacite }}</td><td>{{ row.categories }}</td>
+                    <td><strong>{{ row.taux }}%</strong><div class="progress-bar"><span style="width: {{ row.taux }}%"></span></div></td>
+                    <td><span class="event-status {% if row.taux >= 90 %}status-hot{% else %}status-open{% endif %}">{% if row.taux >= 90 %}Presque complet{% else %}Ouvert{% endif %}</span></td>
+                </tr>
+            {% else %}
+                <tr><td colspan="9">Aucun événement enregistré.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     <section class="panel stadium-map-panel">
         <div class="panel-header">
@@ -67,7 +63,7 @@ const bounds = [];
 stadiumEvents.forEach((event) => {
     const position = [event.latitude, event.longitude];
     bounds.push(position);
-    L.marker(position).addTo(map).bindPopup(`<strong>${event.nom}</strong><br>${event.lieu}<br>${event.date}`);
+    L.marker(position).addTo(map).bindPopup(`<strong>${event.nom}</strong><br>${event.lieu}<br>Du ${event.date} au ${event.date_fin}`);
 });
 map.fitBounds(bounds, { padding: [28, 28] });
 </script>

@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <div class="page-loader" id="page-loader" role="status" aria-label="Chargement">
+        <img src="{{ url_for('static', filename='img/stade-communal-logo.svg') }}" alt="" class="page-loader-logo">
+    </div>
     {% if request.endpoint != 'login' %}
     <header class="site-header">
         <div class="container brandbar">
@@ -71,7 +74,7 @@
     </header>
     {% endif %}
 
-    <main class="container main-content">
+    <main class="container main-content{% if request.endpoint == 'login' %} login-main{% endif %}">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="flash-list">
@@ -103,5 +106,28 @@
         </div>
     </footer>
     {% endif %}
+    <script>
+    (() => {
+        const loader = document.getElementById('page-loader');
+        const hideLoader = () => {
+            window.setTimeout(() => loader.classList.add('page-loader-hidden'), 180);
+        };
+        const showLoader = () => loader.classList.remove('page-loader-hidden');
+
+        window.addEventListener('load', hideLoader);
+        window.addEventListener('pageshow', hideLoader);
+        document.querySelectorAll('a[href]').forEach((link) => {
+            link.addEventListener('click', (event) => {
+                const href = link.getAttribute('href') || '';
+                if (!event.defaultPrevented && !href.startsWith('#') && !href.startsWith('mailto:') && link.target !== '_blank') {
+                    showLoader();
+                }
+            });
+        });
+        document.querySelectorAll('form').forEach((form) => {
+            form.addEventListener('submit', () => showLoader());
+        });
+    })();
+    </script>
 </body>
 </html>

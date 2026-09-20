@@ -250,6 +250,7 @@ class Evenement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nom = db.Column(db.String(150), nullable=False)
     date = db.Column(db.String(20), nullable=False)
+    date_fin = db.Column(db.String(20), nullable=True)
     lieu = db.Column(db.String(150), nullable=False)
     capacite = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text, default="")
@@ -268,7 +269,18 @@ class Categorie(db.Model):
     nom = db.Column(db.String(100), nullable=False)
     prix = db.Column(db.Float, nullable=False, default=0.0)
     quantite = db.Column(db.Integer, nullable=False, default=0)
+    annulee = db.Column(db.Boolean, nullable=False, default=False)
     tickets = db.relationship("Ticket", backref="categorie", cascade="all, delete-orphan")
+
+
+class Operation(db.Model):
+    __tablename__ = "operation"
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(50), nullable=False)
+    action = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.Text, nullable=False, default="")
+    utilisateur = db.Column(db.String(80), nullable=False, default="")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 
 class Vente(db.Model):
@@ -811,6 +823,7 @@ def evenements():
             "nom": row["evenement"].nom,
             "lieu": row["evenement"].lieu,
             "date": row["evenement"].date,
+            "date_fin": row["evenement"].date_fin or row["evenement"].date,
             "latitude": row["latitude"],
             "longitude": row["longitude"],
         }
@@ -824,9 +837,15 @@ def evenements():
 @role_required("administrateur")
 def ajouter_evenement():
     if request.method == "POST":
+        date_debut = request.form["date"]
+        date_fin = request.form["date_fin"]
+        if date_fin < date_debut:
+            flash("La date de fin doit être postérieure ou égale à la date de début.", "danger")
+            return render_template("nouvel_evenement.html")
         nouveau_evenement = Evenement(
             nom=request.form["nom"],
-            date=request.form["date"],
+            date=date_debut,
+            date_fin=date_fin,
             lieu=request.form["lieu"],
             capacite=int(request.form["capacite"]),
             description=request.form.get("description", ""),
@@ -864,7 +883,53 @@ def categories():
         evenements=evenements,
         categories=category_rows,
         selected_event_id=selected_event_id,
+        operations=Operation.query.filter_by(type="categorie").order_by(Operation.created_at.desc()).limit(50).all(),
     )
+
+
+def enregistrer_operation(action, description):
+    db.session.add(Operation(
+        type="categorie",
+        action=action,
+        description=description,
+        utilisateur=session.get("username", "Système"),
+    ))
+
+
+@app.route("/categories/<int:categorie_id>/modifier", methods=["GET", "POST"])
+@login_required
+@role_required("administrateur")
+def modifier_categorie(categorie_id):
+    categorie = Categorie.query.get_or_404(categorie_id)
+    if request.method == "POST":
+        ancien_nom = categorie.nom
+        ancien_prix = categorie.prix
+        ancienne_quantite = categorie.quantite
+        categorie.nom = request.form["nom"].strip()
+        categorie.prix = float(request.form["prix"])
+        categorie.quantite = int(request.form["quantite"])
+        enregistrer_operation(
+            "modification",
+            f"Catégorie « {ancien_nom} » modifiée en « {categorie.nom} » "
+            f"(prix {ancien_prix} -> {categorie.prix}, quantité {ancienne_quantite} -> {categorie.quantite}).",
+        )
+        db.session.commit()
+        flash("La catégorie a été modifiée et l’opération a été enregistrée.", "success")
+        return redirect(url_for("categories", evenement_id=categorie.evenement_id))
+    return render_template("edit_categorie.html", categorie=categorie)
+
+
+@app.route("/categories/<int:categorie_id>/annuler", methods=["POST"])
+@login_required
+@role_required("administrateur")
+def annuler_categorie(categorie_id):
+    categorie = Categorie.query.get_or_404(categorie_id)
+    if not categorie.annulee:
+        categorie.annulee = True
+        enregistrer_operation("annulation", f"Catégorie « {categorie.nom} » annulée pour l’événement « {categorie.evenement.nom} ».")
+        db.session.commit()
+        flash("La catégorie a été annulée et conservée dans l’historique.", "success")
+    return redirect(url_for("categories", evenement_id=categorie.evenement_id))
 
 
 @app.route("/categories/ajouter", methods=["GET", "POST"])
@@ -879,6 +944,7 @@ def ajouter_categorie():
             quantite=int(request.form["quantite"]),
         )
         db.session.add(categorie)
+        enregistrer_operation("creation", f"Catégorie « {categorie.nom} » créée pour l’événement sélectionné.")
         db.session.commit()
         flash(translate("Catégorie ajoutée."), "success")
         return redirect(url_for("categories", evenement_id=categorie.evenement_id))
@@ -893,11 +959,13 @@ def ventes():
     evenements = Evenement.query.order_by(Evenement.date).all()
     categories = []
     selected_event_id = request.args.get("evenement_id", type=int)
+    if selected_event_id is None and evenements:
+        selected_event_id = evenements[0].id
 
     if request.method == "POST":
         evenement_id = int(request.form["evenement_id"])
         categorie_id = int(request.form["categorie_id"])
-        categorie = Categorie.query.get_or_404(categorie_id)
+        categorie = Categorie.query.filter_by(id=categorie_id, evenement_id=evenement_id).first_or_404()
         quantite = int(request.form["quantite"])
         acheteur = request.form["acheteur"]
         email = request.form["email"]
@@ -929,7 +997,7 @@ def ventes():
         return redirect(url_for("billets"))
 
     if selected_event_id:
-        categories = Categorie.query.filter_by(evenement_id=selected_event_id).all()
+        categories = Categorie.query.filter_by(evenement_id=selected_event_id, annulee=False).all()
 
     return render_template(
         "ventes.html",
@@ -1154,6 +1222,18 @@ with app.app_context():
         db.session.commit()
     if "vendeur_id" not in vente_columns:
         db.session.execute(text("ALTER TABLE vente ADD COLUMN vendeur_id INTEGER"))
+        db.session.commit()
+
+    categorie_columns = [col[1] for col in db.session.execute(text("PRAGMA table_info(categorie)"))]
+    if "annulee" not in categorie_columns:
+        db.session.execute(text("ALTER TABLE categorie ADD COLUMN annulee BOOLEAN DEFAULT 0"))
+        db.session.commit()
+
+    evenement_columns = [col[1] for col in db.session.execute(text("PRAGMA table_info(evenement)"))]
+    if "date_fin" not in evenement_columns:
+        db.session.execute(text("ALTER TABLE evenement ADD COLUMN date_fin VARCHAR(20)"))
+        db.session.commit()
+        db.session.execute(text("UPDATE evenement SET date_fin = date WHERE date_fin IS NULL"))
         db.session.commit()
 
     for user in User.query.all():

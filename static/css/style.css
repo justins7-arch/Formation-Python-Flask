@@ -30,6 +30,46 @@ body {
     font-family: "Segoe UI", Arial, sans-serif;
 }
 
+.page-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    background: #09120d;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.28s ease, visibility 0.28s ease;
+}
+
+.page-loader-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.page-loader-logo {
+    width: clamp(76px, 18vw, 128px);
+    height: auto;
+    animation: page-loader-spin 1.25s linear infinite, page-loader-glow 1.25s ease-in-out infinite alternate;
+}
+
+@keyframes page-loader-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes page-loader-glow {
+    from { filter: drop-shadow(0 0 8px rgba(79, 205, 91, 0.28)); }
+    to { filter: drop-shadow(0 0 24px rgba(79, 205, 91, 0.78)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .page-loader-logo {
+        animation: none;
+    }
+}
+
 img {
     max-width: 100%;
     display: block;
@@ -499,6 +539,12 @@ img {
 
 .main-content {
     padding: 30px 0 60px;
+}
+
+.login-main {
+    width: 100%;
+    max-width: none;
+    padding: 0;
 }
 
 .app-layout {
@@ -1243,8 +1289,9 @@ img {
 
 .auth-login-shell {
     position: relative;
-    min-height: calc(100vh - 150px);
-    margin: -30px calc((1200px - 100vw) / 2) -60px;
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
     padding: 50px 16px 80px;
     overflow: hidden;
     background:
@@ -1587,6 +1634,19 @@ th {
 .category-price {
     color: var(--primary-dark);
     white-space: nowrap;
+}
+
+.category-card-actions,
+.form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.operations-history-panel {
+    margin-top: 22px;
 }
 
 .category-filter {
@@ -2043,6 +2103,31 @@ select {
 
 .table-scroll {
     overflow-x: auto;
+}
+
+.management-table {
+    min-width: 860px;
+}
+
+.management-table td {
+    vertical-align: middle;
+}
+
+.management-table .progress-bar {
+    min-width: 105px;
+    margin-top: 6px;
+}
+
+.table-actions {
+    white-space: nowrap;
+}
+
+.table-secondary-text {
+    display: block;
+    max-width: 240px;
+    margin-top: 5px;
+    color: var(--muted);
+    white-space: normal;
 }
 
 @media (max-width: 768px) {
