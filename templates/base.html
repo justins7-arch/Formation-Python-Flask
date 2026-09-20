@@ -11,6 +11,12 @@
     <div class="page-loader" id="page-loader" role="status" aria-label="Chargement">
         <img src="{{ url_for('static', filename='img/stade-communal-logo.svg') }}" alt="" class="page-loader-logo">
     </div>
+    <script>
+    (() => {
+        const savedTheme = localStorage.getItem('stadecontrol-theme');
+        if (savedTheme === 'dark') document.documentElement.classList.add('dark-theme');
+    })();
+    </script>
     {% if request.endpoint != 'login' %}
     <header class="site-header">
         <div class="container brandbar">
@@ -108,6 +114,22 @@
     {% endif %}
     <script>
     (() => {
+        const themeButtons = document.querySelectorAll('[data-theme-toggle]');
+        const updateThemeButtons = () => {
+            const dark = document.documentElement.classList.contains('dark-theme');
+            themeButtons.forEach((button) => {
+                button.innerHTML = dark ? '<span aria-hidden="true">☀</span> Mode clair' : '<span aria-hidden="true">☾</span> Mode sombre';
+            });
+        };
+        themeButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const dark = document.documentElement.classList.toggle('dark-theme');
+                localStorage.setItem('stadecontrol-theme', dark ? 'dark' : 'light');
+                updateThemeButtons();
+            });
+        });
+        updateThemeButtons();
+
         const loader = document.getElementById('page-loader');
         const hideLoader = () => {
             window.setTimeout(() => loader.classList.add('page-loader-hidden'), 180);
